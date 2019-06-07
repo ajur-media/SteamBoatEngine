@@ -1,0 +1,37 @@
+{
+  "name": "karelwintersky/steamboatengine",
+  "description": "Steamboat Engine",
+  "type": "library",
+  "license": "MIT",
+  "version": "1.5",
+  "authors": [
+    {
+      "name": "Karel Wintersky",
+      "email": "karel.wintersky@gmail.com"
+    }
+  ],
+  "config": {
+    "optimize-autoloader": true
+  },
+  "require": {
+    "php": ">=7",
+    "ext-curl": "*",
+    "ext-gd": "*",
+    "ext-mysqli": "*",
+    "ext-pdo": "*"
+  },
+  "require-dev": {
+    "monolog/monolog": "^1.23",
+    "karelwintersky/arris": "^1.7",
+    "foolz/sphinxql-query-builder": "^2.0"
+  },
+  "autoload": {
+    "files": [
+      "functions/functions.php",
+      "functions/helpers.php"
+    ],
+    "psr-4": {
+      "SteamBoat\\"           : "sources/"
+    }
+  }
+}
