@@ -23,6 +23,8 @@ interface SBSearchInterface {
 
 class SBSearch implements SBSearchInterface
 {
+    const VERSION = "1.21";
+
     /**
      * @var \Foolz\SphinxQL\Drivers\Mysqli\Connection
      */
@@ -104,6 +106,8 @@ class SBSearch implements SBSearchInterface
 
     /**
      * Загружает список айдишников из сфинкс-индекса по переданному запросу.
+     *
+     * Старые названия метода: getDataSetFromSphinx
      *
      * @param string $search_query      - строка запроса
      * @param string $source_index      - имя индекса

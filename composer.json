@@ -16,6 +16,7 @@
     "php": ">=7",
     "ext-curl": "*",
     "ext-gd": "*",
+    "ext-iconv": "*",
     "ext-mysqli": "*",
     "ext-pdo": "*"
   },

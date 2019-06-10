@@ -34,28 +34,20 @@ class DateTimeLocal implements DateTimeLocalInterface
         10 => 'октября', 11 => 'ноября', 12 => 'декабря'
     );
 
-    public static function getMonth($index):string
+    public static function getMonth($index): string
     {
         return self::$ruMonths[$index] ?? '';
     }
 
     /**
-     *
-     *
-     * @param String
-     * @param bool $is_show_time
-     *
-     * @return String
-     */
-    /**
      * Берёт дату в формате YYYY-MM-DD и возвращает строку "DD месяца YYYY года"
      *
-     * @param string    $datetime       -- дата YYYY-MM-DD
-     * @param bool      $is_show_time   -- показывать ли время
-     * @param string    $year_suffix    -- суффикс года
+     * @param string $datetime -- дата YYYY-MM-DD
+     * @param bool $is_show_time -- показывать ли время
+     * @param string $year_suffix -- суффикс года
      * @return string                   -- та же дата, но по-русски
      */
-    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'):string
+    public static function convertDate($datetime, $is_show_time = false, $year_suffix = 'г.'): string
     {
         if ($datetime == "0000-00-00 00:00:00" or $datetime == "0000-00-00") return "-";
         list($y, $m, $d, $h, $i, $s) = sscanf($datetime, "%d-%d-%d %d:%d:%d");
@@ -67,6 +59,22 @@ class DateTimeLocal implements DateTimeLocalInterface
             $rusdate .= " " . sprintf("%02d", $h) . ":" . sprintf("%02d", $i);
         }
         return $rusdate;
+    }
+
+    /**
+     * Хелпер, оставлен для совместимости.
+     */
+    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'): string
+    {
+        return self::convertDate($datetime, $is_show_time, $year_suffix);
+    }
+
+    public static function convertDateToDayOfMonth($datetime)
+    {
+        if ($datetime == "0000-00-00 00:00:00" or $datetime == "0000-00-00") return "-";
+        list($y, $m, $d, $h, $i, $s) = sscanf($datetime, "%d-%d-%d %d:%d:%d");
+
+        return "<span>{$d}</span>" . self::getMonth($m);
     }
 
     /**

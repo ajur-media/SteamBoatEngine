@@ -23,7 +23,7 @@ interface SBEngineInterface {
 
 class SBEngine implements SBEngineInterface
 {
-    const VERSION = '1.20';
+    const VERSION = '1.21';
 
     public static $options = [
         'PROJECT_PUBLIC'          =>  '',
@@ -46,8 +46,10 @@ class SBEngine implements SBEngineInterface
      */
     public static function init(array $options)
     {
-        if (!array_key_exists('PROJECT_PUBLIC', $options))
-            throw new Exception('SBEngine::option PROJECT_PUBLIC not present');
+        if (!array_key_exists('PROJECT_PUBLIC', $options)) {
+            die('SBEngine::init() option [PROJECT_PUBLIC] not present!');
+        }
+
         self::$options['PROJECT_PUBLIC'] = $options['PROJECT_PUBLIC'];
 
         self::$options['PROJECT_STORAGE']

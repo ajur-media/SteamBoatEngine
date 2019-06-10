@@ -19,9 +19,9 @@ if (!function_exists('getEngineVersion')) {
     {
         $version_file = getenv('INSTALL_PATH') . getenv('VERSION_FILE');
         $version = [
-            'date'      =>  (new \DateTime())->format('r'),
-            'user'      =>  'local',
-            'summary'   =>  'latest'
+            'date'      =>  date_format( date_create(), 'r'),
+            'user'      => 'local',
+            'summary'   => 'latest'
         ];
 
         if (getenv('VERSION')) {
@@ -30,9 +30,9 @@ if (!function_exists('getEngineVersion')) {
             $array = file($version_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
             $version = [
-                'date'  =>  $array[1],
-                'user'  =>  'local',
-                'summary'   =>  $array[0]
+                'date'      => $array[1],
+                'user'      => 'local',
+                'summary'   => $array[0]
             ];
         }
 
@@ -117,6 +117,56 @@ if (!function_exists('create_BBParser')) {
         return $text;
     }
 } // create_BBParser
+
+if (!function_exists('rewrite_hrefs_to_blank')) {
+
+    /**
+     *
+     * @param $text
+     * @return string|string[]|null
+     */
+    function rewrite_hrefs_to_blank($text)
+    {
+        return preg_replace_callback("/<a([^>]+)>(.*?)<\/a>/i", function ($matches) {
+            $matches[1] = trim($matches[1]);
+            $arr = [];
+
+            $matches[1] = preg_replace("/([\"']{0,})\s([a-zA-Z]+\=(\"|'))/i", "$1-!break!-$2", $matches[1]);
+            $matches[1] = explode("-!break!-", $matches[1]);
+
+            // предполагаем, что по-умолчанию у всех ссылок нужно ставить target=_blank
+            $blank = true;
+            foreach ($matches[1] as $v) {
+                $r = explode("=", $v, 2);
+                $r[1] = trim($r[1], "'");
+                $r[1] = trim($r[1], '"');
+                $arr[$r[0]] = $r[1];
+                if ($r[0] == "href") {
+                    // условия, исключающие установку target=_blank
+                    if (!preg_match("/([a-zA-Z]+)\:\/\/(.*)/i", $r[1])) {
+                        // ссылка не начинается с какого-либо протокола, соот-но она внутренняя и новое окно не нужно
+                        $blank = false;
+                    } else {
+                        // ссылка внешняя, и нам надо понять, не ведет ли она в наш же домен
+                        if (stristr($r[1], getenv('DOMAIN_FQDN'))) $blank = false;
+                    }
+                }
+            }
+            // если уже есть в списке target, то ничего не делаем
+            foreach ($arr as $k => $v) {
+                if ($k == "blank") $blank = false;
+            }
+            if ($blank) $arr['target'] = "_blank";
+            $prms = array();
+            foreach ($arr as $k => $v) {
+                $prms[] = "{$k}=\"{$v}\"";
+            }
+            return "<a " . implode(" ", $prms) . ">{$matches[2]}</a>";
+        }, $text);
+
+    }
+}
+
 
 if (!function_exists('d')) {
     /**
@@ -209,8 +259,8 @@ if (!function_exists('convertUTF16E_to_UTF8')) {
             return iconv("UTF-16E", 'UTF-8', pack('H4', $match[1]));
         }, $t);*/
 
-        return preg_replace_callback('#%u([0-9A-F]{4})#s', function (){
-            iconv("UTF-16BE","UTF-8", pack("H4","$1"));
+        return preg_replace_callback('#%u([0-9A-F]{4})#s', function () {
+            iconv("UTF-16BE", "UTF-8", pack("H4", "$1"));
         }, $t);
     }
 
@@ -223,7 +273,8 @@ if (!function_exists('redirect')) {
      * @param bool $redir
      * @param int $code
      */
-    function redirect($uri, $redir = false, $code = 302) {
+    function redirect($uri, $redir = false, $code = 302)
+    {
         $default_scheme = getenv('REDIRECT_DEFAULT_SCHEME') ?: 'http://';
 
         if (strstr($uri, "http://") or strstr($uri, "https://")) {
@@ -239,7 +290,6 @@ if (!function_exists('logSiteUsage')) {
     /**
      * @param $scope
      * @param $method
-     * @throws Exception
      */
     function logSiteUsage($scope, $method)
     {

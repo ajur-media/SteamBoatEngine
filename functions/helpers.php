@@ -79,6 +79,17 @@ if (!function_exists('normalizeSerialData')) {
     }
 }
 
-
+if (!function_exists('array_map_to_integer')) {
+    /**
+     * Хелпер преобразования всех элементов массива к типу integer
+     *
+     * @param array $input
+     * @return array
+     */
+    function array_map_to_integer(array $input):array
+    {
+        return array_map(function ($i){ return intval($i); }, $input);
+    }
+}
 
 

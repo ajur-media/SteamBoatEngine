@@ -3,9 +3,6 @@
 
 namespace SteamBoat;
 
-use DateTime;
-use Exception;
-
 interface SBCommonInterface {
     public static function getRandomString($length);
     public static function getRandomFilename($length = 20, $suffix = null);
@@ -15,7 +12,7 @@ interface SBCommonInterface {
 
 class SBCommon implements SBCommonInterface
 {
-    const VERSION = '1.19.3';
+    const VERSION = '1.21';
 
 
     /**
@@ -40,7 +37,6 @@ class SBCommon implements SBCommonInterface
      *
      * @param int $length
      * @return string
-     * @throws Exception
      */
     public static function getRandomFilename($length = 20, $suffix = null)
     {
@@ -56,7 +52,8 @@ class SBCommon implements SBCommonInterface
             $salt .= $dictionary[mt_rand(0, $dictionary_len - 1)];
         }
 
-        return (new DateTime())->format('Ymd') . '_' . $salt . $suffix;
+        // equal `(new DateTime())->format('Ymd')` without exception
+        return (date_format( date_create(), 'Ymd' )) . '_' . $salt . $suffix;
     }
 
     /**
