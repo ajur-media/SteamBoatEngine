@@ -31,7 +31,7 @@ interface GDWrapperInterface
     public static function rotate2($fn_source, $dist = "");
 }
 
-class GDWrapper
+class GDWrapper implements GDWrapperInterface
 {
     const VERSION = "3.0";
 
@@ -98,6 +98,11 @@ class GDWrapper
 
     }
 
+    /**
+     * @param $fname
+     * @param $type
+     * @return array
+     */
     private static function createImageFromFile($fname, $type)
     {
         if ($type == IMAGETYPE_BMP) {
@@ -122,6 +127,13 @@ class GDWrapper
         return [$im, $ext];
     }
 
+    /**
+     * @param $width
+     * @param $height
+     * @param $maxwidth
+     * @param $maxheight
+     * @return array
+     */
     private static function getNewSizes($width, $height, $maxwidth, $maxheight)
     {
 
@@ -147,6 +159,12 @@ class GDWrapper
         return array($newwidth, $newheight);
     }
 
+    /**
+     * @param $fn_target
+     * @param $image_destination
+     * @param $extension
+     * @return bool
+     */
     private static function storeImageToFile($fn_target, $image_destination, $extension)
     {
         $result = false;
@@ -175,7 +193,6 @@ class GDWrapper
      * @param $maxwidth
      * @param $maxheight
      * @return bool
-     * @throws Exception
      */
     public static function resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight)
     {
@@ -232,7 +249,6 @@ class GDWrapper
      * @param $maxwidth
      * @param $maxheight
      * @return bool
-     * @throws Exception
      */
     public static function verticalimage($fn_source, $fn_target, $maxwidth, $maxheight)
     {
@@ -283,7 +299,6 @@ class GDWrapper
      * @param $maxwidth - maximal target width
      * @param $maxheight - maximal target height
      * @return bool
-     * @throws Exception
      */
     public static function getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight)
     {
@@ -461,7 +476,6 @@ class GDWrapper
      * @param $fn_source
      * @param string $dist
      * @return bool
-     * @throws Exception
      */
     public static function rotate2($fn_source, $dist = "")
     {
@@ -499,7 +513,6 @@ class GDWrapper
      * @param $fn_source
      * @param string $dist
      * @return bool
-     * @throws Exception
      */
     public static function rotate($fn_source, $dist = "")
     {
@@ -529,6 +542,11 @@ class GDWrapper
         }
     }
 
+    /**
+     * @param $img
+     * @param $rotation
+     * @return bool|false|resource
+     */
     private static function rotateimage($img, $rotation)
     {
         $width = imagesx($img);

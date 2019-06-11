@@ -45,6 +45,10 @@
 
 namespace SteamBoat;
 
+interface PSDReaderInterface {
+    public function getImage();
+}
+
 class PSDReader
 {
     public $infoArray;
@@ -311,9 +315,12 @@ class PSDReader
  * @return mixed identifier
  */
 
-function imagecreatefrompsd($fileName)
-{
-    $psdReader = new PSDReader($fileName);
-    if (isset($psdReader->infoArray['error'])) return '';
-    else return $psdReader->getImage();
+if (!function_exists('imagecreatefrompsd')) {
+    function imagecreatefrompsd($fileName)
+    {
+        $psdReader = new PSDReader($fileName);
+        if (isset($psdReader->infoArray['error'])) return '';
+        else return $psdReader->getImage();
+    }
 }
+

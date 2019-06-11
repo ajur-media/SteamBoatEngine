@@ -1,24 +1,45 @@
 <?php
 
-
 namespace SteamBoat;
 
+interface EMPortalInterface {
+    public function getDoctors($addressId = 0);
 
-class EMPortal
+    public function getClinic($addressId = 0);
+
+    public function createAppointment($fields = []);
+}
+
+class EMPortal implements EMPortalInterface
 {
     private $token;
 
+    /**
+     * EMPortal constructor.
+     * @param $token
+     */
     public function __construct($token)
     {
         $this->token = $token;
     }
 
+    /**
+     * @param int $addressId
+     * @return bool|string
+     */
     public function getDoctors($addressId = 0)
     {
         $url = "https://emportal.ru/api/v1/doctors?json=1&addressId={$addressId}";
         return $this->sendCurlRequest($url, 'GET');
     }
 
+    /**
+     *
+     * @param $url
+     * @param $type
+     * @param null $fields
+     * @return bool|string
+     */
     private function sendCurlRequest($url, $type, $fields = null)
     {
         $ch = curl_init();
@@ -49,12 +70,20 @@ class EMPortal
         return $server_output;
     }
 
+    /**
+     * @param int $addressId
+     * @return bool|string
+     */
     public function getClinic($addressId = 0)
     {
         $url = "https://emportal.ru/api/v1/addresses?json=1&id={$addressId}";
         return $this->sendCurlRequest($url, 'GET');
     }
 
+    /**
+     * @param array $fields
+     * @return bool|string
+     */
     public function createAppointment($fields = [])
     {
         $url = "https://emportal.ru/api/v1/appointments";
