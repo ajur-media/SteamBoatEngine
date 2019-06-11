@@ -333,3 +333,44 @@ if (!function_exists('getimagepath')) {
         return $path;
     }
 }
+
+if (!function_exists('logCronMessage')) {
+
+    /**
+     * Функция логгирования, применяемая в крон-скриптах.
+     *
+     * Выводит сообщение в консоль, если скрипту передан параметр `-v` ($options['verbose'] IS true)
+     * И
+     * логгирует его в монолог
+     *
+     * @param string $message
+     * @param string $mode
+     * @param mixed ...$args
+     */
+    function logCronMessage($message = '', $mode = 'notice', ...$args)
+    {
+        global $options;
+
+        if (strlen(trim($message)) > 0 && ($options['verbose'] || $mode === 'error'))
+            echo $message, PHP_EOL;
+
+        if (strlen(trim($message)) == 0) {
+            \Arris\AppLogger::scope('main')->{$mode}($message);
+        } else {
+            \Arris\AppLogger::scope('main')->{$mode}($message, $args);
+        }
+    }
+}
+
+if (!function_exists('logReport')) {
+    /**
+     * @param $filename
+     * @param $message
+     */
+    function logReport($filename, $message)
+    {
+        $f = fopen($filename, 'a+');
+        fwrite($f, $message);
+        fclose($f);
+    }
+}
