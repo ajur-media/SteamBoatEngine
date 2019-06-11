@@ -374,7 +374,7 @@ class MySQLWrapper implements MySQLWrapperInterface
 
             $tmp = mysqli_fetch_field($res);
 
-            if ($this->total == 1 and ($tmp->name == " COUNT(*) ")) {
+            if ($this->total == 1 and ($tmp->name == "COUNT(*)")) {
                 $this->total = $this->result($res, 0);
             }
 
