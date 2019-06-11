@@ -7,16 +7,26 @@ use Exception;
 use mysqli_result;
 use Arris\AppLogger;
 
-interface MySQLWrapperInterface {
+interface MySQLWrapperInterface
+{
     public function __construct($config, $suffix = 'DATA');
+
     public function connect();
+
     public function close();
+
     public function query($query, $log_sql_request = false);
+
     public function multi_query($query, $debug = false);
+
     public function result($res, $row);
+
     public function fetch($result);
+
     public function num_rows($res);
+
     public function insert_id();
+
     public function create($fields, $table, $hash = null, $joins = null, $needpages = true);
 }
 
@@ -72,22 +82,22 @@ class MySQLWrapper implements MySQLWrapperInterface
     public function __construct($config, $suffix = 'DATA')
     {
         if (!array_key_exists($suffix, $config['DB_CONNECTIONS'])) {
-            AppLogger::scope('mysql')->emergency('[MYSQL ERROR] at '. __CLASS__ . '->' . __METHOD__ .' : DB_CONNECTIONS collection does not contain given suffix', [$suffix]);
-            die('[MYSQL ERROR] at '. __CLASS__ . '->' . __METHOD__ .' : DB_CONNECTIONS collection does not contain given suffix : `' . $suffix . '`');
+            AppLogger::scope('mysql')->emergency('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB_CONNECTIONS collection does not contain given suffix', [$suffix]);
+            die('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB_CONNECTIONS collection does not contain given suffix : `' . $suffix . '`');
         }
 
-        $this->db_config = $config['DB_CONNECTIONS'][ $suffix ];
+        $this->db_config = $config['DB_CONNECTIONS'][$suffix];
         $this->connection_instantiator = $suffix;
 
         $this->hostname = $this->db_config['hostname'];
-        $this->port     = $this->db_config['port'];
+        $this->port = $this->db_config['port'];
         $this->username = $this->db_config['username'];
         $this->password = $this->db_config['password'];
         $this->database = $this->db_config['database'];
 
         if (!array_key_exists('charset', $this->db_config)) {
             $this->charset = self::DEFAULT_CHARSET;
-        } elseif(!is_null($this->db_config['charset'])) {
+        } elseif (!is_null($this->db_config['charset'])) {
             $this->charset = $this->db_config['charset'];
         } else {
             $this->charset = null;
@@ -95,7 +105,7 @@ class MySQLWrapper implements MySQLWrapperInterface
 
         if (!array_key_exists('charset_collate', $this->db_config)) {
             $this->charset_collate = self::DEFAULT_CHARSET_COLLATE;
-        } elseif(!is_null($this->db_config['charset_collate'])) {
+        } elseif (!is_null($this->db_config['charset_collate'])) {
             $this->charset_collate = $this->db_config['charset_collate'];
         } else {
             $this->charset_collate = null;
@@ -113,12 +123,12 @@ class MySQLWrapper implements MySQLWrapperInterface
 
         if (mysqli_connect_error()) {
 
-            AppLogger::scope('mysql')->emergency('[MYSQL ERROR] ', [ mysqli_connect_errno(), mysqli_connect_error(), $this->db_config ]);
+            AppLogger::scope('mysql')->emergency('[MYSQL ERROR] ', [mysqli_connect_errno(), mysqli_connect_error(), $this->db_config]);
 
             die(
                 '['
-                .mysqli_connect_errno()
-                .'] Ошибка подключения '
+                . mysqli_connect_errno()
+                . '] Ошибка подключения '
                 . mysqli_connect_error()
                 . " ( Host: {$this->hostname}; Port: {$this->port}; User: {$this->username}; Database: {$this->database}"
             );
@@ -142,48 +152,7 @@ class MySQLWrapper implements MySQLWrapperInterface
     }
 
     // запрос в базу
-    public function query($query, $log_sql_request = false)
-    {
-        if ($log_sql_request)
-            AppLogger::scope('mysql')->debug('[MYSQL QUERY]', [$query]);
 
-        $error = false;
-        $this->request_error = false;
-
-        $this->mysqlcountquery++;
-
-        $time_start = microtime(true);
-
-        if (!$result = mysqli_query($this->db, $query)) {
-            $error = true;
-            $this->request_error = true;
-        }
-
-        $time_finish = microtime(true);
-        $time_consumed = $time_finish - $time_start;
-
-        if ($error) {
-            AppLogger::scope('mysql')->error("mysqli_query() error: ", [
-                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
-                mysqli_error($this->db),
-                $query
-            ]);
-        }
-
-        if (($time_consumed > getenv('DB_SLOW_QUERY_THRESHOLD'))) {
-            AppLogger::scope('mysql')->info("mysqli_query() slow: ", [
-                $time_consumed,
-                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
-                $query
-            ]);
-        }
-
-        $this->mysqlquerytime += $time_consumed;
-        $this->result = $result;
-        return $result;
-    }
-
-    // запрос в базу
     public function multi_query($query, $debug = false)
     {
         $this->mysqlcountquery++;
@@ -203,18 +172,14 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $result;
     }
 
-    public function result($res, $row)
-    {
-        $r = mysqli_fetch_array($res);
-        return $r[$row];
-    }
+    // запрос в базу
 
     public function fetch($result)
     {
         if (is_null($result) and isset($this->result)) {
 
-            if (! $this->result instanceof mysqli_result) {
-                AppLogger::scope('mysql')->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [ debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
+            if (!$this->result instanceof mysqli_result) {
+                AppLogger::scope('mysql')->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
                 return null;
             } else {
                 return mysqli_fetch_assoc($this->result);
@@ -222,8 +187,8 @@ class MySQLWrapper implements MySQLWrapperInterface
 
         } else {
 
-            if (! $result instanceof mysqli_result) {
-                AppLogger::scope('mysql')->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [ debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
+            if (!$result instanceof mysqli_result) {
+                AppLogger::scope('mysql')->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
                 return null;
             } else {
                 return mysqli_fetch_assoc($result);
@@ -423,6 +388,53 @@ class MySQLWrapper implements MySQLWrapperInterface
         }
         $this->query = $query . $limit;
         return $query . $limit;
+    }
+
+    public function query($query, $log_sql_request = false)
+    {
+        if ($log_sql_request)
+            AppLogger::scope('mysql')->debug('[MYSQL QUERY]', [$query]);
+
+        $error = false;
+        $this->request_error = false;
+
+        $this->mysqlcountquery++;
+
+        $time_start = microtime(true);
+
+        if (!$result = mysqli_query($this->db, $query)) {
+            $error = true;
+            $this->request_error = true;
+        }
+
+        $time_finish = microtime(true);
+        $time_consumed = $time_finish - $time_start;
+
+        if ($error) {
+            AppLogger::scope('mysql')->error("mysqli_query() error: ", [
+                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
+                mysqli_error($this->db),
+                $query
+            ]);
+        }
+
+        if (($time_consumed > getenv('DB_SLOW_QUERY_THRESHOLD'))) {
+            AppLogger::scope('mysql')->info("mysqli_query() slow: ", [
+                $time_consumed,
+                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
+                $query
+            ]);
+        }
+
+        $this->mysqlquerytime += $time_consumed;
+        $this->result = $result;
+        return $result;
+    }
+
+    public function result($res, $row)
+    {
+        $r = mysqli_fetch_array($res);
+        return $r[$row];
     }
 
 }

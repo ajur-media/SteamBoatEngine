@@ -8,20 +8,23 @@
 
 namespace SteamBoat;
 
-interface DateTimeLocalInterface {
+interface DateTimeLocalInterface
+{
 
-    public static function getMonth($index):string ;
+    public static function getMonth($index): string;
 
-    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'):string;
+    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'): string;
 
-    public static function convertDatetimeToTimestamp($datetime, $format = 'd-m-Y H:i:s'):int;
-    public static function convertDateToTimestamp($date, $format = 'd-m-Y'):int;
+    public static function convertDatetimeToTimestamp($datetime, $format = 'd-m-Y H:i:s'): int;
+
+    public static function convertDateToTimestamp($date, $format = 'd-m-Y'): int;
 }
 
 class DateTimeLocal implements DateTimeLocalInterface
 {
-    const VERSION = '1.19.4';
+    const VERSION = '1.20';
 
+    // old: tMonth
     public static $tMonth = array(
         '',
         'январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'
@@ -29,14 +32,24 @@ class DateTimeLocal implements DateTimeLocalInterface
 
     // old: $tMonthR
     public static $ruMonths = array(
-        1 => 'января', 2 => 'февраля', 3 => 'марта', 4 => 'апреля',
-        5 => 'мая', 6 => 'июня', 7 => 'июля', 8 => 'августа', 9 => 'сентября',
-        10 => 'октября', 11 => 'ноября', 12 => 'декабря'
+        1 => 'января', 2 => 'февраля',
+        3 => 'марта', 4 => 'апреля', 5 => 'мая',
+        6 => 'июня', 7 => 'июля', 8 => 'августа',
+        9 => 'сентября', 10 => 'октября', 11 => 'ноября',
+        12 => 'декабря'
     );
 
-    public static function getMonth($index): string
+    public static $tWeek = array(
+        '',
+        'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'
+    );
+
+    /**
+     * Хелпер, оставлен для совместимости.
+     */
+    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'): string
     {
-        return self::$ruMonths[$index] ?? '';
+        return self::convertDate($datetime, $is_show_time, $year_suffix);
     }
 
     /**
@@ -61,14 +74,6 @@ class DateTimeLocal implements DateTimeLocalInterface
         return $rusdate;
     }
 
-    /**
-     * Хелпер, оставлен для совместимости.
-     */
-    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'): string
-    {
-        return self::convertDate($datetime, $is_show_time, $year_suffix);
-    }
-
     public static function convertDateToDayOfMonth($datetime)
     {
         if ($datetime == "0000-00-00 00:00:00" or $datetime == "0000-00-00") return "-";
@@ -77,29 +82,38 @@ class DateTimeLocal implements DateTimeLocalInterface
         return "<span>{$d}</span>" . self::getMonth($m);
     }
 
+    public static function getMonth($index): string
+    {
+        return self::$ruMonths[$index] ?? '';
+    }
+
     /**
      * Конвертирует дату-время в указанном формате в unix timestamp
+     *
+     * В легаси-коде - convertdt2long
      *
      * @param $datetime
      * @param $format
      *
      * @return false|int
      */
-    public static function convertDatetimeToTimestamp($datetime, $format = 'd-m-Y H:i:s'):int
+    public static function convertDatetimeToTimestamp($datetime, $format = 'd-m-Y H:i:s'): int
     {
-        return intval( (\DateTime::createFromFormat($format, $datetime))->format('U') );
+        return intval(date_format(date_create($datetime, $format), 'U'));
     }
 
     /**
      * Возвращает timestamp для полуночи указанной даты
      *
+     * В легаси-коде convertdt2long_short()
+     *
      * @param $date
      * @param string $format
      * @return string
      */
-    public static function convertDateToTimestamp($date, $format = 'd-m-Y'):int
+    public static function convertDateToTimestamp($date, $format = 'd-m-Y'): int
     {
-        return intval( (\DateTime::createFromFormat($format, $date))->format('U') );
+        return intval(date_format(date_create($date, $format), 'U'));
     }
 }
 

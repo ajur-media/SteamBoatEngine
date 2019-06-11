@@ -98,6 +98,30 @@ class PSDReader
         }
     }
 
+    private function _getInteger($byteCount = 1)
+    {
+        switch ($byteCount) {
+            case 4:
+                // for some strange reason this is still broken...
+                return @reset(unpack('N', fread($this->fp, 4)));
+                break;
+
+            case 2:
+                return @reset(unpack('n', fread($this->fp, 2)));
+                break;
+
+            default:
+                return hexdec($this->_hexReverse(bin2hex(fread($this->fp, $byteCount))));
+        }
+    }
+
+    private function _hexReverse($hex)
+    {
+        $output = '';
+        if (strlen($hex) % 2) return false;
+        for ($pointer = strlen($hex); $pointer >= 0; $pointer -= 2) $output .= substr($hex, $pointer, 2);
+        return $output;
+    }
 
     public function getImage()
     {
@@ -276,31 +300,6 @@ class PSDReader
 
             default:
                 return $int;
-        }
-    }
-
-    private function _hexReverse($hex)
-    {
-        $output = '';
-        if (strlen($hex) % 2) return false;
-        for ($pointer = strlen($hex); $pointer >= 0; $pointer -= 2) $output .= substr($hex, $pointer, 2);
-        return $output;
-    }
-
-    private function _getInteger($byteCount = 1)
-    {
-        switch ($byteCount) {
-            case 4:
-                // for some strange reason this is still broken...
-                return @reset(unpack('N', fread($this->fp, 4)));
-                break;
-
-            case 2:
-                return @reset(unpack('n', fread($this->fp, 2)));
-                break;
-
-            default:
-                return hexdec($this->_hexReverse(bin2hex(fread($this->fp, $byteCount))));
         }
     }
 }

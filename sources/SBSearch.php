@@ -5,19 +5,24 @@ namespace SteamBoat;
 
 use Exception;
 use Foolz\SphinxQL\Drivers\Mysqli\Connection;
+use Foolz\SphinxQL\Drivers\ResultSetInterface;
+use Foolz\SphinxQL\Exception\DatabaseException;
 use Foolz\SphinxQL\SphinxQL;
 use Arris\AppLogger;
 
-interface SBSearchInterface {
+interface SBSearchInterface
+{
     public static function init($sphinx_connection_host, $sphinx_connection_port);
 
     public static function createConnection();
+
     public static function C();
 
     public static function rt_DeleteIndex($index_name, $field, $field_value = null);
+
     public static function rt_ReplaceIndex(string $index_name, array $updateset);
 
-    public static function get_IDs_DataSet(string $search_query, string $source_index, string $sort_field, string $sort_order = 'DESC', int $limit = 5, array $option_weight = []):array;
+    public static function get_IDs_DataSet(string $search_query, string $source_index, string $sort_field, string $sort_order = 'DESC', int $limit = 5, array $option_weight = []): array;
 }
 
 
@@ -26,7 +31,7 @@ class SBSearch implements SBSearchInterface
     const VERSION = "1.21";
 
     /**
-     * @var \Foolz\SphinxQL\Drivers\Mysqli\Connection
+     * @var Connection
      */
     private static $sphql_connection;
     private static $sphinx_connection_host;
@@ -47,6 +52,14 @@ class SBSearch implements SBSearchInterface
     /**
      * @return SphinxQL
      */
+    public static function C()
+    {
+        return self::createConnection();
+    }
+
+    /**
+     * @return SphinxQL
+     */
     public static function createConnection()
     {
         $conn = new Connection();
@@ -55,25 +68,17 @@ class SBSearch implements SBSearchInterface
             'port' => self::$sphinx_connection_port
         ]);
 
-        return (new SphinxQL( $conn ));
-    }
-
-    /**
-     * @return SphinxQL
-     */
-    public static function C()
-    {
-        return self::createConnection();
+        return (new SphinxQL($conn));
     }
 
     /**
      * Удаляет строку реалтайм-индекса
      *
-     * @param $index_name           -- индекс
-     * @param $field                -- поле для поиска индекса
-     * @param null $field_value     -- значение для поиска индекса
+     * @param $index_name -- индекс
+     * @param $field -- поле для поиска индекса
+     * @param null $field_value -- значение для поиска индекса
      *
-     * @return \Foolz\SphinxQL\Drivers\ResultSetInterface|null
+     * @return ResultSetInterface|null
      */
     public static function rt_DeleteIndex($index_name, $field, $field_value = null)
     {
@@ -91,7 +96,7 @@ class SBSearch implements SBSearchInterface
      *
      * @param string $index_name
      * @param array $updateset
-     * @return \Foolz\SphinxQL\Drivers\ResultSetInterface|null
+     * @return ResultSetInterface|null
      */
     public static function rt_ReplaceIndex(string $index_name, array $updateset)
     {
@@ -109,17 +114,16 @@ class SBSearch implements SBSearchInterface
      *
      * Старые названия метода: getDataSetFromSphinx
      *
-     * @param string $search_query      - строка запроса
-     * @param string $source_index      - имя индекса
-     * @param string $sort_field        - поле сортировки
-     * @param string $sort_order        - условие сортировки
-
-     * @param int $limit                - количество
-     * @param array $option_weight      - опции "веса"
+     * @param string $search_query - строка запроса
+     * @param string $source_index - имя индекса
+     * @param string $sort_field - поле сортировки
+     * @param string $sort_order - условие сортировки
+     * @param int $limit - количество
+     * @param array $option_weight - опции "веса"
      * @return array                    - список айдишников
      * @throws Exception
      */
-    public static function get_IDs_DataSet(string $search_query, string $source_index, string $sort_field, string $sort_order = 'DESC', int $limit = 5, array $option_weight = []):array
+    public static function get_IDs_DataSet(string $search_query, string $source_index, string $sort_field, string $sort_order = 'DESC', int $limit = 5, array $option_weight = []): array
     {
         $found_dataset = [];
         $compiled_request = '';
@@ -141,7 +145,7 @@ class SBSearch implements SBSearchInterface
                     ->option('field_weights', $option_weight);
             }
 
-            if (!is_null($limit) && is_numeric($limit)){
+            if (!is_null($limit) && is_numeric($limit)) {
                 $search_request = $search_request
                     ->limit($limit);
             }
@@ -157,7 +161,7 @@ class SBSearch implements SBSearchInterface
                 $found_dataset[] = $row['id'];
             }
 
-        } catch (\Foolz\SphinxQL\Exception\DatabaseException $e) {
+        } catch (DatabaseException $e) {
             AppLogger::scope('sphinx')->error(
                 __CLASS__ . '/' . __METHOD__ .
                 " Error fetching data from `{$source_index}` : " . $e->getMessage(),

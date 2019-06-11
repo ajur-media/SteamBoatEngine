@@ -43,13 +43,13 @@ if (!function_exists('getEngineVersion')) {
 
 if (!function_exists('create_BBParser')) {
     /**
-     * BB Parsing method (v FontankaFi)
+     * BB Parsing method
      * Используется ТОЛЬКО для юзерконтента
      *
      * @param $text
      * @param string $mode
+     * @param bool $youtube_enabled
      * @return string|string[]|null
-     * @throws Exception
      */
     function create_BBParser($text, $mode = "posts", $youtube_enabled = false)
     {
@@ -161,7 +161,8 @@ if (!function_exists('rewrite_hrefs_to_blank')) {
             foreach ($arr as $k => $v) {
                 $prms[] = "{$k}=\"{$v}\"";
             }
-            return "<a " . implode(" ", $prms) . ">{$matches[2]}</a>";
+            $params_as_string = implode(" ", $prms);
+            return "<a {$params_as_string}>{$matches[2]}</a>";
         }, $text);
 
     }
@@ -313,7 +314,6 @@ if (!function_exists('getimagepath')) {
      */
     function getimagepath($type = "photos", $cdate = null)
     {
-        global $CONFIG;
         $directory_separator = DIRECTORY_SEPARATOR;
 
         $cdate = is_null($cdate) ? time() : strtotime($cdate);

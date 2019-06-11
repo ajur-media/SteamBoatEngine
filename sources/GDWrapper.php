@@ -9,19 +9,25 @@
 namespace SteamBoat;
 
 use Arris\AppLogger;
+use Exception;
 
-interface GDWrapperInterface {
+interface GDWrapperInterface
+{
 
     public static function init();
 
     public static function resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+
     public static function resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+
     public static function verticalimage($fn_source, $fn_target, $maxwidth, $maxheight);
 
     public static function getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight);
+
     public static function addWaterMark($fn_source, $params, $pos_index);
 
     public static function rotate($fn_source, $dist = "");
+
     public static function rotate2($fn_source, $dist = "");
 }
 
@@ -92,6 +98,72 @@ class GDWrapper
 
     }
 
+    private static function createImageFromFile($fname, $type)
+    {
+        if ($type == IMAGETYPE_BMP) {
+            return [null, null];
+        } else if ($type == IMAGETYPE_PSD) {
+            $ext = 'psd';
+            $im = imagecreatefrompsd($fname);
+        } else if ($type == IMAGETYPE_SWF) {
+            $ext = 'swf';
+            $im = imagecreatefromswf($fname);
+        } else if ($type == IMAGETYPE_PNG) {
+            $ext = 'png';
+            $im = imagecreatefrompng($fname);
+        } else if ($type == IMAGETYPE_JPEG) {
+            $ext = 'jpg';
+            $im = imagecreatefromjpeg($fname);
+        } else if ($type == IMAGETYPE_GIF) {
+            $ext = 'gif';
+            $im = imagecreatefromgif($fname);
+        }
+
+        return [$im, $ext];
+    }
+
+    private static function getNewSizes($width, $height, $maxwidth, $maxheight)
+    {
+
+        if ($width > $height) {
+            // горизонтальная
+            if ($maxwidth < $width) {
+                $newwidth = $maxwidth;
+                $newheight = ceil($height * $maxwidth / $width);
+            } else {
+                $newheight = $height;
+                $newwidth = $width;
+            }
+        } else {
+            // вертикальная
+            if ($maxheight < $height) {
+                $newheight = $maxheight;
+                $newwidth = ceil($width * $maxheight / $height);
+            } else {
+                $newheight = $height;
+                $newwidth = $width;
+            }
+        }
+        return array($newwidth, $newheight);
+    }
+
+    private static function storeImageToFile($fn_target, $image_destination, $extension)
+    {
+        $result = false;
+
+        // JPG/PNG/GIF/JPG
+        if ($extension == "jpg") {
+            $result = imagejpeg($image_destination, $fn_target, self::$default_jpeg_quality);
+        } elseif ($extension == "png") {
+            $result = imagepng($image_destination, $fn_target);
+        } elseif ($extension == "gif") {
+            $result = imagegif($image_destination, $fn_target);
+        } else {
+            $result = imagejpeg($image_destination, $fn_target, self::$default_jpeg_quality);
+        }
+
+        return $result;
+    }
 
     /**
      * Ресайзит картинку по большей из сторон
@@ -103,7 +175,7 @@ class GDWrapper
      * @param $maxwidth
      * @param $maxheight
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight)
     {
@@ -160,7 +232,7 @@ class GDWrapper
      * @param $maxwidth
      * @param $maxheight
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function verticalimage($fn_source, $fn_target, $maxwidth, $maxheight)
     {
@@ -201,7 +273,6 @@ class GDWrapper
         }
     }
 
-
     /**
      * Ресайзит картинку в фиксированные размеры
      *
@@ -212,7 +283,7 @@ class GDWrapper
      * @param $maxwidth - maximal target width
      * @param $maxheight - maximal target height
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight)
     {
@@ -304,6 +375,9 @@ class GDWrapper
         }
     }
 
+
+    /* ====================================================================================================== */
+
     /**
      * Добавляет на изображение вотермарк (
      *
@@ -387,7 +461,7 @@ class GDWrapper
      * @param $fn_source
      * @param string $dist
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function rotate2($fn_source, $dist = "")
     {
@@ -425,7 +499,7 @@ class GDWrapper
      * @param $fn_source
      * @param string $dist
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public static function rotate($fn_source, $dist = "")
     {
@@ -453,60 +527,6 @@ class GDWrapper
         } else {
             return false;
         }
-    }
-
-
-
-    /* ====================================================================================================== */
-
-
-    private static function getNewSizes($width, $height, $maxwidth, $maxheight)
-    {
-
-        if ($width > $height) {
-            // горизонтальная
-            if ($maxwidth < $width) {
-                $newwidth = $maxwidth;
-                $newheight = ceil($height * $maxwidth / $width);
-            } else {
-                $newheight = $height;
-                $newwidth = $width;
-            }
-        } else {
-            // вертикальная
-            if ($maxheight < $height) {
-                $newheight = $maxheight;
-                $newwidth = ceil($width * $maxheight / $height);
-            } else {
-                $newheight = $height;
-                $newwidth = $width;
-            }
-        }
-        return array($newwidth, $newheight);
-    }
-
-    private static function createImageFromFile($fname, $type)
-    {
-        if ($type == IMAGETYPE_BMP) {
-            return [ null, null ];
-        } else if ($type == IMAGETYPE_PSD) {
-            $ext = 'psd';
-            $im = imagecreatefrompsd($fname);
-        } else if ($type == IMAGETYPE_SWF) {
-            $ext = 'swf';
-            $im = imagecreatefromswf($fname);
-        } else if ($type == IMAGETYPE_PNG) {
-            $ext = 'png';
-            $im = imagecreatefrompng($fname);
-        } else if ($type == IMAGETYPE_JPEG) {
-            $ext = 'jpg';
-            $im = imagecreatefromjpeg($fname);
-        } else if ($type == IMAGETYPE_GIF) {
-            $ext = 'gif';
-            $im = imagecreatefromgif($fname);
-        }
-
-        return [ $im, $ext ];
     }
 
     private static function rotateimage($img, $rotation)
@@ -556,24 +576,6 @@ class GDWrapper
             return $newimg;
         }
         return false;
-    }
-
-    private static function storeImageToFile($fn_target, $image_destination, $extension)
-    {
-        $result = false;
-
-        // JPG/PNG/GIF/JPG
-        if ($extension == "jpg") {
-            $result = imagejpeg($image_destination, $fn_target, self::$default_jpeg_quality);
-        } elseif ($extension == "png") {
-            $result = imagepng($image_destination, $fn_target);
-        } elseif ($extension == "gif") {
-            $result = imagegif($image_destination, $fn_target);
-        } else {
-            $result = imagejpeg($image_destination, $fn_target, self::$default_jpeg_quality);
-        }
-
-        return $result;
     }
 
 }

@@ -2,6 +2,8 @@
 
 // ХЕЛПЕРЫ ДЛЯ picture class
 
+use SteamBoat\GDWrapper;
+
 if (!function_exists('getfixedpicture')) {
 
     /**
@@ -14,7 +16,7 @@ if (!function_exists('getfixedpicture')) {
      */
     function getfixedpicture($fn_source, $fn_target, $maxwidth, $maxheight)
     {
-        return \SteamBoat\GDWrapper::getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight);
     }
 }
 
@@ -29,7 +31,7 @@ if (!function_exists('resizeimageaspect')) {
      */
     function resizeimageaspect($fn_source, $fn_target, $maxwidth, $maxheight)
     {
-        return \SteamBoat\GDWrapper::resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight);
     }
 }
 
@@ -45,7 +47,7 @@ if (!function_exists('verticalimage')) {
      */
     function verticalimage($fn_source, $fn_target, $maxwidth, $maxheight)
     {
-        return \SteamBoat\GDWrapper::verticalimage($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::verticalimage($fn_source, $fn_target, $maxwidth, $maxheight);
     }
 }
 
@@ -61,7 +63,7 @@ if (!function_exists('resizepictureaspect')) {
      */
     function resizepictureaspect($fn_source, $fn_target, $maxwidth, $maxheight)
     {
-        return \SteamBoat\GDWrapper::resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight);
     }
 }
 
@@ -86,9 +88,11 @@ if (!function_exists('array_map_to_integer')) {
      * @param array $input
      * @return array
      */
-    function array_map_to_integer(array $input):array
+    function array_map_to_integer(array $input): array
     {
-        return array_map(function ($i){ return intval($i); }, $input);
+        return array_map(function ($i) {
+            return intval($i);
+        }, $input);
     }
 }
 

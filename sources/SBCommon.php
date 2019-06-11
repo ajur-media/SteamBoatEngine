@@ -3,8 +3,10 @@
 
 namespace SteamBoat;
 
-interface SBCommonInterface {
+interface SBCommonInterface
+{
     public static function getRandomString($length);
+
     public static function getRandomFilename($length = 20, $suffix = null);
 
     public static function redirectCode($uri, $redirect = false, $code = 302);
@@ -53,7 +55,7 @@ class SBCommon implements SBCommonInterface
         }
 
         // equal `(new DateTime())->format('Ymd')` without exception
-        return (date_format( date_create(), 'Ymd' )) . '_' . $salt . $suffix;
+        return (date_format(date_create(), 'Ymd')) . '_' . $salt . $suffix;
     }
 
     /**
@@ -66,7 +68,7 @@ class SBCommon implements SBCommonInterface
      */
     public static function redirectCode($uri, $redirect = false, $code = 302)
     {
-        static $http_codes = array (
+        static $http_codes = array(
             100 => "HTTP/1.1 100 Continue",
             101 => "HTTP/1.1 101 Switching Protocols",
             200 => "HTTP/1.1 200 OK",
@@ -131,10 +133,6 @@ class SBCommon implements SBCommonInterface
         }
         return false;
     }
-
-
-
-
 
 
 }

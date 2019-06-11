@@ -19,18 +19,6 @@ class EMPortal
         return $this->sendCurlRequest($url, 'GET');
     }
 
-    public function getClinic($addressId = 0)
-    {
-        $url = "https://emportal.ru/api/v1/addresses?json=1&id={$addressId}";
-        return $this->sendCurlRequest($url, 'GET');
-    }
-
-    public function createAppointment($fields = [])
-    {
-        $url = "https://emportal.ru/api/v1/appointments";
-        return $this->sendCurlRequest($url, 'POST', $fields);
-    }
-
     private function sendCurlRequest($url, $type, $fields = null)
     {
         $ch = curl_init();
@@ -59,6 +47,18 @@ class EMPortal
         curl_close($ch);
 
         return $server_output;
+    }
+
+    public function getClinic($addressId = 0)
+    {
+        $url = "https://emportal.ru/api/v1/addresses?json=1&id={$addressId}";
+        return $this->sendCurlRequest($url, 'GET');
+    }
+
+    public function createAppointment($fields = [])
+    {
+        $url = "https://emportal.ru/api/v1/appointments";
+        return $this->sendCurlRequest($url, 'POST', $fields);
     }
 
 }

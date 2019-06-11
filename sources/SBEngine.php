@@ -2,23 +2,31 @@
 
 namespace SteamBoat;
 
+use function array_diff;
 use Arris\AppLogger;
 use Exception;
+use function is_dir;
+use function rmdir;
+use function scandir;
+use function unlink;
 
-interface SBEngineInterface {
+interface SBEngineInterface
+{
     public static function init(array $options);
 
-    public static function engine_prepare_classes($folders):array;
+    public static function engine_prepare_classes($folders): array;
+
     public static function engine_class_loader($class);
 
-    public static function clear_nginx_cache(string $url, $levels = '1:2'):bool;
+    public static function clear_nginx_cache(string $url, $levels = '1:2'): bool;
 
-    public static function getContentPath($type = "photos", $creation_date = null):string;
-    public static function getContentURL($type = "photos", $creation_date = null, $final_slash = true):string;
+    public static function getContentPath($type = "photos", $creation_date = null): string;
 
-    public static function loadCurrencies():array;
+    public static function getContentURL($type = "photos", $creation_date = null, $final_slash = true): string;
 
-    public static function rmdir($directory):bool;
+    public static function loadCurrencies(): array;
+
+    public static function rmdir($directory): bool;
 }
 
 class SBEngine implements SBEngineInterface
@@ -26,11 +34,11 @@ class SBEngine implements SBEngineInterface
     const VERSION = '1.21';
 
     public static $options = [
-        'PROJECT_PUBLIC'          =>  '',
-        'PROJECT_STORAGE'  =>  '',
-        'PROJECT_CLASSES'  =>  '',
+        'PROJECT_PUBLIC' => '',
+        'PROJECT_STORAGE' => '',
+        'PROJECT_CLASSES' => '',
         //
-        'FILE_CURRENCY'     =>  ''
+        'FILE_CURRENCY' => ''
     ];
 
     // алиасы к папкам хранилища
@@ -59,7 +67,7 @@ class SBEngine implements SBEngineInterface
 
         self::$options['PROJECT_CLASSES']
             = array_key_exists('PROJECT_CLASSES', $options)
-            ? $options['PROJECT_PUBLIC']. $options['PROJECT_CLASSES']
+            ? $options['PROJECT_PUBLIC'] . $options['PROJECT_CLASSES']
             : $options['PROJECT_PUBLIC'] . "engine.legacy/";
 
         self::$options['FILE_CURRENCY']
@@ -84,7 +92,7 @@ class SBEngine implements SBEngineInterface
      * @param $folders
      * @return array
      */
-    public static function engine_prepare_classes($folders):array
+    public static function engine_prepare_classes($folders): array
     {
         $engine_path = self::$options['PROJECT_CLASSES'];
         $classes_list = [];
@@ -123,7 +131,7 @@ class SBEngine implements SBEngineInterface
             // ajax or request классы
             $class_filename = "{$class_words[1]}.{$class_words[0]}" . DIRECTORY_SEPARATOR . $class . '.php';
 
-        } elseif (count($class_words) === 2 ) {
+        } elseif (count($class_words) === 2) {
 
             // common or site/get or admin/get classes
             $class_filename = $class_words[0] . DIRECTORY_SEPARATOR . $class . '.php';
@@ -145,7 +153,7 @@ class SBEngine implements SBEngineInterface
      * @return bool
      * @throws Exception
      */
-    public static function clear_nginx_cache(string $url, $levels = '1:2'):bool
+    public static function clear_nginx_cache(string $url, $levels = '1:2'): bool
     {
         $unlink_status = true;
 
@@ -193,10 +201,21 @@ class SBEngine implements SBEngineInterface
         }
 
         if (getenv('DEBUG_LOG_NGINX_CACHE')) {
-            AppLogger::scope('main')->debug("Force clean NGINX cached data (key/path/status)", [ $cache_key, $cache_filepath, $unlink_status ]);
+            AppLogger::scope('main')->debug("Force clean NGINX cached data (key/path/status)", [$cache_key, $cache_filepath, $unlink_status]);
         }
 
         return $unlink_status;
+    }
+
+    public static function rmdir($directory): bool
+    {
+        $files = array_diff(scandir($directory), ['.', '..']);
+        foreach ($files as $file) {
+            (is_dir("$directory/$file"))
+                ? self::rmdir("$directory/$file")
+                : unlink("$directory/$file");
+        }
+        return rmdir($directory);
     }
 
     /**
@@ -207,7 +226,7 @@ class SBEngine implements SBEngineInterface
      * @param bool $final_slash
      * @return string
      */
-    public static function getContentURL($type = "photos", $creation_date = null, $final_slash = true):string
+    public static function getContentURL($type = "photos", $creation_date = null, $final_slash = true): string
     {
         $directory_separator = DIRECTORY_SEPARATOR;
         $cdate = is_null($creation_date) ? time() : strtotime($creation_date);
@@ -218,7 +237,7 @@ class SBEngine implements SBEngineInterface
         return $path;
     }
 
-    public static function getContentPath($type = "photos", $creation_date = null):string
+    public static function getContentPath($type = "photos", $creation_date = null): string
     {
         $STORAGE_FOLDER = self::$options['PROJECT_STORAGE'];
 
@@ -244,7 +263,7 @@ class SBEngine implements SBEngineInterface
         return $path;
     }
 
-    public static function loadCurrencies():array
+    public static function loadCurrencies(): array
     {
         $MAX_CURRENCY_STRING_LENGTH = 5;
 
@@ -272,18 +291,6 @@ class SBEngine implements SBEngineInterface
 
         return $current_currency;
     }
-
-    public static function rmdir($directory):bool
-    {
-        $files = \array_diff( \scandir($directory), ['.', '..'] );
-        foreach ($files as $file) {
-            (\is_dir("$directory/$file"))
-                ? self::rmdir("$directory/$file")
-                : \unlink("$directory/$file");
-        }
-        return \rmdir($directory);
-    }
-
 
 
 }
