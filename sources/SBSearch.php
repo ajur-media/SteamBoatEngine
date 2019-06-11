@@ -82,9 +82,9 @@ class SBSearch implements SBSearchInterface
      */
     public static function rt_DeleteIndex($index_name, $field, $field_value = null)
     {
-        if (is_null($field_value)) return null; //@todo: Exception
+        if (is_null($field_value)) return null;
 
-        return (new SphinxQL(self::$sphql_connection))
+        return self::createConnection()
             ->delete()
             ->from($index_name)
             ->where($field, '=', $field_value)
@@ -102,7 +102,7 @@ class SBSearch implements SBSearchInterface
     {
         if (empty($updateset)) return null;
 
-        return (new SphinxQL(self::$sphql_connection))
+        return self::createConnection()
             ->replace()
             ->into($index_name)
             ->set($updateset)
@@ -114,14 +114,13 @@ class SBSearch implements SBSearchInterface
      *
      * Старые названия метода: getDataSetFromSphinx
      *
-     * @param string $search_query - строка запроса
-     * @param string $source_index - имя индекса
-     * @param string $sort_field - поле сортировки
-     * @param string $sort_order - условие сортировки
-     * @param int $limit - количество
-     * @param array $option_weight - опции "веса"
+     * @param string $search_query      - строка запроса
+     * @param string $source_index      - имя индекса
+     * @param string $sort_field        - поле сортировки
+     * @param string $sort_order        - условие сортировки
+     * @param int $limit                - количество
+     * @param array $option_weight      - опции "веса"
      * @return array                    - список айдишников
-     * @throws Exception
      */
     public static function get_IDs_DataSet(string $search_query, string $source_index, string $sort_field, string $sort_order = 'DESC', int $limit = 5, array $option_weight = []): array
     {
@@ -131,7 +130,7 @@ class SBSearch implements SBSearchInterface
         if (empty($source_index)) return $found_dataset;
 
         try {
-            $search_request = (new SphinxQL(self::$sphql_connection))
+            $search_request = self::createConnection()
                 ->select()
                 ->from($source_index);
 
@@ -161,7 +160,7 @@ class SBSearch implements SBSearchInterface
                 $found_dataset[] = $row['id'];
             }
 
-        } catch (DatabaseException $e) {
+        } catch (Exception $e) {
             AppLogger::scope('sphinx')->error(
                 __CLASS__ . '/' . __METHOD__ .
                 " Error fetching data from `{$source_index}` : " . $e->getMessage(),

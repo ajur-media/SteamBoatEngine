@@ -148,10 +148,11 @@ class SBEngine implements SBEngineInterface
     }
 
     /**
+     * Очищает кэш NGINX
+     *
      * @param string $url
      * @param string $levels
      * @return bool
-     * @throws Exception
      */
     public static function clear_nginx_cache(string $url, $levels = '1:2'): bool
     {
@@ -207,6 +208,12 @@ class SBEngine implements SBEngineInterface
         return $unlink_status;
     }
 
+    /**
+     * Рекурсивно удаляет каталоги по указанному пути
+     *
+     * @param $directory
+     * @return bool
+     */
     public static function rmdir($directory): bool
     {
         $files = array_diff(scandir($directory), ['.', '..']);
@@ -237,6 +244,13 @@ class SBEngine implements SBEngineInterface
         return $path;
     }
 
+    /**
+     * Возвращает внутренний путь к контенту
+     *
+     * @param string $type
+     * @param null $creation_date
+     * @return string
+     */
     public static function getContentPath($type = "photos", $creation_date = null): string
     {
         $STORAGE_FOLDER = self::$options['PROJECT_STORAGE'];
@@ -263,6 +277,11 @@ class SBEngine implements SBEngineInterface
         return $path;
     }
 
+    /**
+     * Загружает валюты из JSON-файла
+     *
+     * @return array
+     */
     public static function loadCurrencies(): array
     {
         $MAX_CURRENCY_STRING_LENGTH = 5;
