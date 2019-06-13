@@ -7,8 +7,13 @@ use SteamBoat\GDWrapper;
 interface SteamBoatHelpers {
 
     function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
+    function resizeimageaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
+    function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
+    function resizepictureaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
 
+    function normalizeSerialData(&$data, array $default_value = []);
 
+    function array_map_to_integer(array $input): array;
 }
 
 if (!function_exists('getfixedpicture')) {
@@ -36,7 +41,7 @@ if (!function_exists('resizeimageaspect')) {
      * @param $maxheight
      * @return bool
      */
-    function resizeimageaspect($fn_source, $fn_target, $maxwidth, $maxheight)
+    function resizeimageaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         return GDWrapper::resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight);
     }
@@ -52,7 +57,7 @@ if (!function_exists('verticalimage')) {
      * @return bool
      * @throws Exception
      */
-    function verticalimage($fn_source, $fn_target, $maxwidth, $maxheight)
+    function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         return GDWrapper::verticalimage($fn_source, $fn_target, $maxwidth, $maxheight);
     }
@@ -68,7 +73,7 @@ if (!function_exists('resizepictureaspect')) {
      * @return bool
      * @throws Exception
      */
-    function resizepictureaspect($fn_source, $fn_target, $maxwidth, $maxheight)
+    function resizepictureaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         return GDWrapper::resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight);
     }
@@ -82,7 +87,7 @@ if (!function_exists('normalizeSerialData')) {
      * @param $data
      * @param $default_value
      */
-    function normalizeSerialData(&$data, $default_value = [])
+    function normalizeSerialData(&$data, array $default_value = [])
     {
         $data = empty($data) ? $default_value : @unserialize($data);
     }

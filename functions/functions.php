@@ -7,7 +7,7 @@ use Arris\AppLogger;
 use SteamBoat\BBParser;
 
 interface SteamBoatFunctions {
-    function getEngineVersion():string;
+    function getEngineVersion():array;
 
     function create_BBParser($text, $mode = "posts", $youtube_enabled = false):string;
     function rewrite_hrefs_to_blank(string $text):string;
@@ -39,9 +39,8 @@ if (!function_exists('getEngineVersion')) {
      * Загружает версию движка из GIT
      *
      * @return array
-     * @throws Exception
      */
-    function getEngineVersion():string
+    function getEngineVersion():array
     {
         $version_file = getenv('INSTALL_PATH') . getenv('VERSION_FILE');
         $version = [
