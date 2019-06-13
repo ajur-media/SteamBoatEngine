@@ -144,6 +144,7 @@ class PSDReader
                 fclose($tfp);
                 fclose($this->fp);
                 $this->fp = fopen($this->tempFileName, 'r');
+                break;
             default:
                 // continue with current file handle;
                 break;
@@ -243,7 +244,7 @@ class PSDReader
      *
      */
 
-    private function _getPackedBitsDecoded($string)
+    private function _getPackedBitsDecoded(string $string):string
     {
         /*
         The PackBits algorithm will precede a block of data with a one byte header n, where n is interpreted as follows:
@@ -284,6 +285,7 @@ class PSDReader
                 }
             }
         }
+        return $returnString;
     }
 
     private function _unsignedToSigned($int, $byteSize = 1)

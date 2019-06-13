@@ -10,19 +10,18 @@ namespace SteamBoat;
 
 interface DateTimeLocalInterface
 {
+    public static function getMonth(int $index): string;
 
-    public static function getMonth($index): string;
+    public static function convertDateRu(string $datetime, bool $is_show_time = false, string $year_suffix = 'г.'): string;
 
-    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'): string;
+    public static function convertDatetimeToTimestamp(string $datetime, string $format = 'd-m-Y H:i:s'): int;
 
-    public static function convertDatetimeToTimestamp($datetime, $format = 'd-m-Y H:i:s'): int;
-
-    public static function convertDateToTimestamp($date, $format = 'd-m-Y'): int;
+    public static function convertDateToTimestamp(string $date, string $format = 'd-m-Y'): int;
 }
 
 class DateTimeLocal implements DateTimeLocalInterface
 {
-    const VERSION = '1.20';
+    const VERSION = '1.11';
 
     // old: tMonth
     public static $tMonth = array(
@@ -47,7 +46,7 @@ class DateTimeLocal implements DateTimeLocalInterface
     /**
      * Хелпер, оставлен для совместимости.
      */
-    public static function convertDateRu($datetime, $is_show_time = false, $year_suffix = 'г.'): string
+    public static function convertDateRu(string $datetime, bool $is_show_time = false, string $year_suffix = 'г.'):string
     {
         return self::convertDate($datetime, $is_show_time, $year_suffix);
     }
@@ -60,7 +59,7 @@ class DateTimeLocal implements DateTimeLocalInterface
      * @param string $year_suffix -- суффикс года
      * @return string                   -- та же дата, но по-русски
      */
-    public static function convertDate($datetime, $is_show_time = false, $year_suffix = 'г.'): string
+    public static function convertDate(string $datetime, bool $is_show_time = false, string $year_suffix = 'г.'):string
     {
         if ($datetime == "0000-00-00 00:00:00" or $datetime == "0000-00-00") return "-";
         list($y, $m, $d, $h, $i, $s) = sscanf($datetime, "%d-%d-%d %d:%d:%d");
@@ -74,7 +73,7 @@ class DateTimeLocal implements DateTimeLocalInterface
         return $rusdate;
     }
 
-    public static function convertDateToDayOfMonth($datetime)
+    public static function convertDateToDayOfMonth(string $datetime):string
     {
         if ($datetime == "0000-00-00 00:00:00" or $datetime == "0000-00-00") return "-";
         list($y, $m, $d, $h, $i, $s) = sscanf($datetime, "%d-%d-%d %d:%d:%d");
@@ -82,7 +81,7 @@ class DateTimeLocal implements DateTimeLocalInterface
         return "<span>{$d}</span>" . self::getMonth($m);
     }
 
-    public static function getMonth($index): string
+    public static function getMonth(int $index):string
     {
         return self::$ruMonths[$index] ?? '';
     }
@@ -97,9 +96,9 @@ class DateTimeLocal implements DateTimeLocalInterface
      *
      * @return false|int
      */
-    public static function convertDatetimeToTimestamp($datetime, $format = 'd-m-Y H:i:s'): int
+    public static function convertDatetimeToTimestamp(string $datetime, string $format = 'd-m-Y H:i:s'):int
     {
-        return intval(date_format(date_create($datetime, $format), 'U'));
+        return intval(date_format(date_create_from_format($datetime, $format), 'U'));
     }
 
     /**
@@ -111,9 +110,9 @@ class DateTimeLocal implements DateTimeLocalInterface
      * @param string $format
      * @return string
      */
-    public static function convertDateToTimestamp($date, $format = 'd-m-Y'): int
+    public static function convertDateToTimestamp(string $date, string $format = 'd-m-Y'): int
     {
-        return intval(date_format(date_create($date, $format), 'U'));
+        return intval(date_format(date_create_from_format($date, $format), 'U'));
     }
 }
 

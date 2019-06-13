@@ -16,19 +16,19 @@ interface GDWrapperInterface
 
     public static function init();
 
-    public static function resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+    public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
 
-    public static function resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+    public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool ;
 
-    public static function verticalimage($fn_source, $fn_target, $maxwidth, $maxheight);
+    public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool ;
 
-    public static function getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight);
+    public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
 
-    public static function addWaterMark($fn_source, $params, $pos_index);
+    public static function addWaterMark(string $fn_source, array $params, int $pos_index):bool;
 
-    public static function rotate($fn_source, $dist = "");
+    public static function rotate(string $fn_source, string $dist = ""):bool;
 
-    public static function rotate2($fn_source, $dist = "");
+    public static function rotate2(string $fn_source, string $dist = ""):bool ;
 }
 
 class GDWrapper implements GDWrapperInterface
@@ -41,7 +41,9 @@ class GDWrapper implements GDWrapperInterface
     {
         self::$default_jpeg_quality = getenv('ADMIN_JPEG_COMPRESSION_QUALITY') ?: 100;
 
-        if (getenv('DEBUG_LOG_CONSTRUCTOR_CALL')) AppLogger::scope('main')->info("Created static " . __CLASS__ . " from " . __FILE__, [microtime(true)]);
+        if (getenv('DEBUG_LOG_CONSTRUCTOR_CALL')) {
+            AppLogger::scope('main')->info("Created static " . __CLASS__ . " from " . __FILE__, [microtime(true)]);
+        }
     }
 
     /**
@@ -55,7 +57,7 @@ class GDWrapper implements GDWrapperInterface
      * @param $maxheight
      * @return bool
      */
-    public static function resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight)
+    public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         if (!is_readable($fn_source)) {
             AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -194,7 +196,7 @@ class GDWrapper implements GDWrapperInterface
      * @param $maxheight
      * @return bool
      */
-    public static function resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight)
+    public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         if (!is_readable($fn_source)) {
             AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -250,7 +252,7 @@ class GDWrapper implements GDWrapperInterface
      * @param $maxheight
      * @return bool
      */
-    public static function verticalimage($fn_source, $fn_target, $maxwidth, $maxheight)
+    public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         if (!is_readable($fn_source)) {
             AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -300,7 +302,7 @@ class GDWrapper implements GDWrapperInterface
      * @param $maxheight - maximal target height
      * @return bool
      */
-    public static function getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight)
+    public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         if (!is_readable($fn_source)) {
             AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -403,7 +405,7 @@ class GDWrapper implements GDWrapperInterface
      * @param int $pos_index
      * @return bool
      */
-    public static function addWaterMark($fn_source, $params, $pos_index)
+    public static function addWaterMark(string $fn_source, array $params, int $pos_index):bool
     {
         $watermark = $params['watermark'];
         $margin = $params['margin'];
@@ -477,7 +479,7 @@ class GDWrapper implements GDWrapperInterface
      * @param string $dist
      * @return bool
      */
-    public static function rotate2($fn_source, $dist = "")
+    public static function rotate2(string $fn_source, string $dist = ""):bool
     {
         if (!is_readable($fn_source)) {
             AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -514,7 +516,7 @@ class GDWrapper implements GDWrapperInterface
      * @param string $dist
      * @return bool
      */
-    public static function rotate($fn_source, $dist = "")
+    public static function rotate(string $fn_source, string $dist = ""):bool
     {
         if (!is_readable($fn_source)) {
             AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);

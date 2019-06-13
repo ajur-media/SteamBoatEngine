@@ -14,15 +14,15 @@ interface SBEngineInterface
 {
     public static function init(array $options);
 
-    public static function engine_prepare_classes($folders): array;
+    public static function engine_prepare_classes(array $folders): array;
 
-    public static function engine_class_loader($class);
+    public static function engine_class_loader(string $class);
 
-    public static function clear_nginx_cache(string $url, $levels = '1:2'): bool;
+    public static function clear_nginx_cache(string $url, string $levels = '1:2'): bool;
 
-    public static function getContentPath($type = "photos", $creation_date = null): string;
+    public static function getContentPath(string $type = "photos", string $creation_date = ''): string;
 
-    public static function getContentURL($type = "photos", $creation_date = null, $final_slash = true): string;
+    public static function getContentURL(string $type = "photos", string $creation_date = '', bool $final_slash = true): string;
 
     public static function loadCurrencies(): array;
 
@@ -31,14 +31,16 @@ interface SBEngineInterface
 
 class SBEngine implements SBEngineInterface
 {
-    const VERSION = '1.21';
+    const VERSION = '1.22';
 
     public static $options = [
-        'PROJECT_PUBLIC' => '',
-        'PROJECT_STORAGE' => '',
-        'PROJECT_CLASSES' => '',
+        'PROJECT_PUBLIC'    =>  '',
+        'PROJECT_STORAGE'   =>  '',
+        'PROJECT_CLASSES'   =>  '',
         //
-        'FILE_CURRENCY' => ''
+        'FILE_CURRENCY'     =>  '',
+        'FILE_WEATHER'      =>  '',
+        //
     ];
 
     // алиасы к папкам хранилища
@@ -92,7 +94,7 @@ class SBEngine implements SBEngineInterface
      * @param $folders
      * @return array
      */
-    public static function engine_prepare_classes($folders): array
+    public static function engine_prepare_classes(array $folders): array
     {
         $engine_path = self::$options['PROJECT_CLASSES'];
         $classes_list = [];
@@ -121,7 +123,7 @@ class SBEngine implements SBEngineInterface
      * @param $class
      * @throws Exception
      */
-    public static function engine_class_loader($class)
+    public static function engine_class_loader(string $class)
     {
         $classes_directory = self::$options['PROJECT_CLASSES'];
         $class_words = explode("_", $class);
@@ -154,17 +156,25 @@ class SBEngine implements SBEngineInterface
      * @param string $levels
      * @return bool
      */
-    public static function clear_nginx_cache(string $url, $levels = '1:2'): bool
+    public static function clear_nginx_cache(string $url, string $levels = '1:2'): bool
     {
         $unlink_status = true;
 
-        if (getenv('NGINX_CACHE_USE') == 0) return false;
+        if (getenv('NGINX_CACHE_USE') == 0) {
+            return false;
+        }
 
-        if (is_null($levels)) $levels = getenv('NGINX_CACHE_LEVELS');
+        if (is_null($levels)) {
+            $levels = getenv('NGINX_CACHE_LEVELS');
+        }
 
         $cache_root = rtrim(getenv('NGINX_CACHE_PATH'), DIRECTORY_SEPARATOR);
 
         if ($url === "/") {
+            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
+                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: requested clean whole cache");
+            }
+
             $dir_content = array_diff(scandir($cache_root), ['.', '..']);
 
             foreach ($dir_content as $subdir) {
@@ -172,6 +182,11 @@ class SBEngine implements SBEngineInterface
                     $unlink_status = $unlink_status && self::rmdir($cache_root . DIRECTORY_SEPARATOR . $subdir . '/');
                 }
             }
+
+            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
+                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: whole cache clean status: ", [ $cache_root, $unlink_status ]);
+            }
+
             return $unlink_status;
         }
 
@@ -196,13 +211,22 @@ class SBEngine implements SBEngineInterface
         $cache_filepath .= "/{$cache_filename}";
 
         if (file_exists($cache_filepath)) {
+            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
+                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: cached data present: ", [ $cache_filepath ]);
+            }
+
             $unlink_status = unlink($cache_filepath);
+
         } else {
+            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
+                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: cached data not found: ", [ $cache_filepath ]);
+            }
+
             $unlink_status = true;
         }
 
         if (getenv('DEBUG_LOG_NGINX_CACHE')) {
-            AppLogger::scope('main')->debug("Force clean NGINX cached data (key/path/status)", [$cache_key, $cache_filepath, $unlink_status]);
+            AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: Clear status (key/status)", [$cache_key, $unlink_status]);
         }
 
         return $unlink_status;
@@ -229,14 +253,14 @@ class SBEngine implements SBEngineInterface
      * Генерирует веб-путь к картинке (упрощенный механизм, для отрисовки фронта)
      *
      * @param string $type
-     * @param null $creation_date
+     * @param string $creation_date
      * @param bool $final_slash
      * @return string
      */
-    public static function getContentURL($type = "photos", $creation_date = null, $final_slash = true): string
+    public static function getContentURL(string $type = "photos", string $creation_date = '', bool $final_slash = true): string
     {
         $directory_separator = DIRECTORY_SEPARATOR;
-        $cdate = is_null($creation_date) ? time() : strtotime($creation_date);
+        $cdate = empty($creation_date) ? time() : strtotime($creation_date);
 
         $path = "/{$type}/" . date("Y{$directory_separator}m", $cdate);
         $path .= $final_slash ? '/' : '';
@@ -248,16 +272,16 @@ class SBEngine implements SBEngineInterface
      * Возвращает внутренний путь к контенту
      *
      * @param string $type
-     * @param null $creation_date
+     * @param string $creation_date
      * @return string
      */
-    public static function getContentPath($type = "photos", $creation_date = null): string
+    public static function getContentPath(string $type = "photos", string $creation_date = ''): string
     {
         $STORAGE_FOLDER = self::$options['PROJECT_STORAGE'];
 
         $directory_separator = DIRECTORY_SEPARATOR;
 
-        $creation_date = is_null($creation_date) ? time() : strtotime($creation_date);
+        $creation_date = empty($creation_date) ? time() : strtotime($creation_date);
 
         if (!in_array($type, self::$storages)) {
             return "/tmp/";

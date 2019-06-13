@@ -1,8 +1,15 @@
 <?php
 
-// ХЕЛПЕРЫ ДЛЯ picture class
+// ХЕЛПЕРЫ
 
 use SteamBoat\GDWrapper;
+
+interface SteamBoatHelpers {
+
+    function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
+
+
+}
 
 if (!function_exists('getfixedpicture')) {
 
@@ -14,7 +21,7 @@ if (!function_exists('getfixedpicture')) {
      * @return bool
      * @throws Exception
      */
-    function getfixedpicture($fn_source, $fn_target, $maxwidth, $maxheight)
+    function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         return GDWrapper::getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight);
     }

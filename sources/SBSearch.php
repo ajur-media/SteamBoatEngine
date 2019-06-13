@@ -12,13 +12,13 @@ use Arris\AppLogger;
 
 interface SBSearchInterface
 {
-    public static function init($sphinx_connection_host, $sphinx_connection_port);
+    public static function init(string $sphinx_connection_host, string $sphinx_connection_port);
 
     public static function createConnection();
 
     public static function C();
 
-    public static function rt_DeleteIndex($index_name, $field, $field_value = null);
+    public static function rt_DeleteIndex(string $index_name, string $field, $field_value = null);
 
     public static function rt_ReplaceIndex(string $index_name, array $updateset);
 
@@ -28,7 +28,7 @@ interface SBSearchInterface
 
 class SBSearch implements SBSearchInterface
 {
-    const VERSION = "1.21";
+    const VERSION = "1.22";
 
     /**
      * @var Connection
@@ -38,18 +38,20 @@ class SBSearch implements SBSearchInterface
     private static $sphinx_connection_port;
 
     /**
-     * Инициализирует коннекшен к сфинксу через Foolz\SphinxQL interface
+     * Задает хост/порт для коннекшенов через SphinxQL-интерфейс
      *
-     * @param $sphinx_connection_host
-     * @param $sphinx_connection_port
+     * @param string $sphinx_connection_host
+     * @param string $sphinx_connection_port
      */
-    public static function init($sphinx_connection_host, $sphinx_connection_port)
+    public static function init(string $sphinx_connection_host, string $sphinx_connection_port)
     {
         self::$sphinx_connection_host = $sphinx_connection_host;
         self::$sphinx_connection_port = $sphinx_connection_port;
     }
 
     /**
+     * Создает инстанс SphinxQL, алиас для createConnection()
+     *
      * @return SphinxQL
      */
     public static function C()
@@ -58,6 +60,8 @@ class SBSearch implements SBSearchInterface
     }
 
     /**
+     * Создает инстанс SphinxQL
+     *
      * @return SphinxQL
      */
     public static function createConnection()
@@ -80,7 +84,7 @@ class SBSearch implements SBSearchInterface
      *
      * @return ResultSetInterface|null
      */
-    public static function rt_DeleteIndex($index_name, $field, $field_value = null)
+    public static function rt_DeleteIndex(string $index_name, string $field, $field_value = null)
     {
         if (is_null($field_value)) return null;
 
@@ -166,7 +170,7 @@ class SBSearch implements SBSearchInterface
                 " Error fetching data from `{$source_index}` : " . $e->getMessage(),
                 [
                     htmlspecialchars(urldecode($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
-                    $search_request->compile(),
+                    $search_request->getCompiled(),
                     $e->getCode()
                 ]
             );

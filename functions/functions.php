@@ -6,6 +6,32 @@
 use Arris\AppLogger;
 use SteamBoat\BBParser;
 
+interface SteamBoatFunctions {
+    function getEngineVersion():string;
+
+    function create_BBParser($text, $mode = "posts", $youtube_enabled = false):string;
+    function rewrite_hrefs_to_blank(string $text):string;
+
+    function ddd(...$args);
+    function dd($value);
+    function d($value);
+
+    function intdiv($p, $q):int;
+
+    function pluralForm($number, $forms, string $glue = '|'):string;
+
+    function convertUTF16E_to_UTF8(string $t):string;
+
+    function redirect($uri, $redir = false, $code = 302);
+
+    function logSiteUsage(string $scope, string $value);
+    function logCronMessage($message = '', $mode = 'notice', ...$args);
+
+    function getimagepath($type = "photos", $cdate = null):string;
+
+    function logReport(string $filename, string $message);
+}
+
 
 if (!function_exists('getEngineVersion')) {
 
@@ -15,7 +41,7 @@ if (!function_exists('getEngineVersion')) {
      * @return array
      * @throws Exception
      */
-    function getEngineVersion()
+    function getEngineVersion():string
     {
         $version_file = getenv('INSTALL_PATH') . getenv('VERSION_FILE');
         $version = [
@@ -40,7 +66,6 @@ if (!function_exists('getEngineVersion')) {
     }
 }
 
-
 if (!function_exists('create_BBParser')) {
     /**
      * BB Parsing method
@@ -51,7 +76,7 @@ if (!function_exists('create_BBParser')) {
      * @param bool $youtube_enabled
      * @return string|string[]|null
      */
-    function create_BBParser($text, $mode = "posts", $youtube_enabled = false)
+    function create_BBParser($text, $mode = "posts", $youtube_enabled = false):string
     {
         $sizes = array(
             "posts" => array(560, 340),
@@ -125,7 +150,7 @@ if (!function_exists('rewrite_hrefs_to_blank')) {
      * @param $text
      * @return string|string[]|null
      */
-    function rewrite_hrefs_to_blank($text)
+    function rewrite_hrefs_to_blank(string $text):string
     {
         return preg_replace_callback("/<a([^>]+)>(.*?)<\/a>/i", function ($matches) {
             $matches[1] = trim($matches[1]);
@@ -168,6 +193,21 @@ if (!function_exists('rewrite_hrefs_to_blank')) {
     }
 }
 
+if (!function_exists('ddd')) {
+    /**
+     * Dump many args and die
+     * @param mixed ...$args
+     */
+    function ddd(...$args)
+    {
+        if (php_sapi_name() !== "cli") echo '<pre>';
+        foreach (func_get_args() as $arg) {
+            var_dump($arg);
+        }
+        if (php_sapi_name() !== "cli") echo '</pre>';
+        die;
+    }
+}
 
 if (!function_exists('d')) {
     /**
@@ -175,12 +215,12 @@ if (!function_exists('d')) {
      */
     function d($value)
     {
-        echo '<pre>';
+        if (php_sapi_name() !== "cli") echo '<pre>';
         /*foreach (func_get_args() as $arg) {
             var_dump($value);
         }*/
         var_dump($value);
-        echo '</pre>';
+        if (php_sapi_name() !== "cli") echo '</pre>';
     }
 } // d
 
@@ -203,7 +243,7 @@ if (!function_exists('intdiv')) {
      * @param $q
      * @return int
      */
-    function intdiv($p, $q)
+    function intdiv($p, $q):int
     {
         return (int)floor(abs($p / $q));
     }
@@ -212,13 +252,12 @@ if (!function_exists('intdiv')) {
 if (!function_exists('pluralForm')) {
     /**
      *
-     * @param int $number
+     * @param $number
      * @param array $forms (array or string with glues, x|y|z or [x,y,z]
-     *
      * @param string $glue
-     * @return mixed|null
+     * @return string
      */
-    function pluralForm($number, $forms, $glue = '|')
+    function pluralForm($number, $forms, string $glue = '|'):string
     {
         if (is_string($forms)) {
             $forms = explode($forms, $glue);
@@ -253,7 +292,7 @@ if (!function_exists('convertUTF16E_to_UTF8')) {
      * @param $t
      * @return string|string[]|null
      */
-    function convertUTF16E_to_UTF8($t)
+    function convertUTF16E_to_UTF8(string $t):string
     {
         // return $t;
         /*return preg_replace_callback('#%u([0-9A-F]{4})#s', function ($match) {
@@ -290,47 +329,16 @@ if (!function_exists('logSiteUsage')) {
 
     /**
      * @param $scope
-     * @param $method
+     * @param $value
      */
-    function logSiteUsage($scope, $method)
+    function logSiteUsage(string $scope, string $value)
     {
         if (getenv('DEBUG_LOG_SITEUSAGE')) AppLogger::scope($scope)->notice("Usage: ", [
             round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
             memory_get_usage(),
-            $method,
+            $value,
             $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
         ]);
-    }
-}
-
-if (!function_exists('getimagepath')) {
-
-    /**
-     *
-     *
-     * @param string $type
-     * @param null $cdate
-     * @return string
-     */
-    function getimagepath($type = "photos", $cdate = null)
-    {
-        $directory_separator = DIRECTORY_SEPARATOR;
-
-        $cdate = is_null($cdate) ? time() : strtotime($cdate);
-
-        $path
-            = getenv('INSTALL_PATH')
-            . "www/i/"
-            . $type
-            . DIRECTORY_SEPARATOR
-            . date("Y{$directory_separator}m", $cdate)
-            . DIRECTORY_SEPARATOR;
-
-        if (!is_dir($path)) {
-            mkdir($path, 0777, true);
-        }
-
-        return $path;
     }
 }
 
@@ -362,12 +370,43 @@ if (!function_exists('logCronMessage')) {
     }
 }
 
+if (!function_exists('getimagepath')) {
+
+    /**
+     *
+     *
+     * @param string $type
+     * @param null $cdate
+     * @return string
+     */
+    function getimagepath($type = "photos", $cdate = null):string
+    {
+        $directory_separator = DIRECTORY_SEPARATOR;
+
+        $cdate = is_null($cdate) ? time() : strtotime($cdate);
+
+        $path
+            = getenv('INSTALL_PATH')
+            . "www/i/"
+            . $type
+            . DIRECTORY_SEPARATOR
+            . date("Y{$directory_separator}m", $cdate)
+            . DIRECTORY_SEPARATOR;
+
+        if (!is_dir($path)) {
+            mkdir($path, 0777, true);
+        }
+
+        return $path;
+    }
+}
+
 if (!function_exists('logReport')) {
     /**
      * @param $filename
      * @param $message
      */
-    function logReport($filename, $message)
+    function logReport(string $filename, string $message)
     {
         $f = fopen($filename, 'a+');
         fwrite($f, $message);
