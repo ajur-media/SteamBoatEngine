@@ -9,7 +9,7 @@ use SteamBoat\BBParser;
 interface SteamBoatFunctions {
     function getEngineVersion():array;
 
-    function create_BBParser($text, $mode = "posts", $youtube_enabled = false):string;
+    function create_BBParser($text, $mode = "posts", $youtube_enabled = false):string; //@todo: rename
     function rewrite_hrefs_to_blank(string $text):string;
 
     function ddd(...$args);
@@ -22,14 +22,16 @@ interface SteamBoatFunctions {
 
     function convertUTF16E_to_UTF8(string $t):string;
 
-    function redirect($uri, $redir = false, $code = 302);
+    function redirect($uri, $redir = false, $code = 302); //@todo: rename
 
     function logSiteUsage(string $scope, string $value);
-    function logCronMessage($message = '', $mode = 'notice', ...$args);
+    function logCronMessage($message = '', $mode = 'notice', ...$args); //@todo: говнокод
 
     function getimagepath($type = "photos", $cdate = null):string;
 
-    function logReport(string $filename, string $message);
+    function logReport(string $filename, string $message);  //@todo: говнокод
+
+    function parseUploadError(array $upload_data, $where = __METHOD__):string;
 }
 
 
@@ -410,5 +412,48 @@ if (!function_exists('logReport')) {
         $f = fopen($filename, 'a+');
         fwrite($f, $message);
         fclose($f);
+    }
+}
+
+if (!function_exists('parseUploadError')) {
+
+    /**
+     *
+     * @param array $upload_data
+     * @param string $where
+     * @return string
+     */
+    function parseUploadError(array $upload_data, $where = __METHOD__):string
+    {
+        switch ($upload_data['error']) {
+            case UPLOAD_ERR_OK: {
+                $error = '0 UPLOAD_ERR_OK: Файл успешно загружен на сервер, но что-то пошло не так.';
+                break;
+            }
+            case UPLOAD_ERR_NO_FILE: {
+                $error = 'UPLOAD_ERR_NO_FILE: Файл не был загружен по неизвестной причине';
+                break;
+            }
+            case UPLOAD_ERR_INI_SIZE: {
+                $error = 'UPLOAD_ERR_INI_SIZE: Размер принятого файла превысил upload_max_filesize в php.ini';
+                break;
+            }
+            case UPLOAD_ERR_FORM_SIZE: {
+                $error = 'UPLOAD_ERR_FORM_SIZE: Размер загружаемого файла превысил значение MAX_FILE_SIZE, указанное в HTML-форме.';
+                break;
+            }
+            case UPLOAD_ERR_PARTIAL: {
+                $error = 'UPLOAD_ERR_PARTIAL: Загружаемый файл был получен только частично. ';
+                break;
+            }
+            default: {
+                $error = '?: Что-то пошло не так.';
+            }
+        }
+
+        if (getenv('DEBUG_LOG_FILEUPLOAD')) {
+            AppLogger::scope('main')->error("{$where} throw file upload error:", [ $error ]);
+        }
+        return $error;
     }
 }

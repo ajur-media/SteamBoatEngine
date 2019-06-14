@@ -98,7 +98,7 @@ class DateTimeLocal implements DateTimeLocalInterface
      */
     public static function convertDatetimeToTimestamp(string $datetime, string $format = 'd-m-Y H:i:s'):int
     {
-        return intval(date_format(date_create_from_format($datetime, $format), 'U'));
+        return intval(date_format(date_create_from_format($format, $datetime), 'U'));
     }
 
     /**
@@ -112,7 +112,7 @@ class DateTimeLocal implements DateTimeLocalInterface
      */
     public static function convertDateToTimestamp(string $date, string $format = 'd-m-Y'): int
     {
-        return intval(date_format(date_create_from_format($date, $format), 'U'));
+        return intval(date_format(date_create_from_format($format, $date), 'U'));
     }
 }
 
