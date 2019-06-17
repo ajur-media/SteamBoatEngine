@@ -9,7 +9,7 @@ use SteamBoat\BBParser;
 interface SteamBoatFunctions {
     function getEngineVersion():array;
 
-    function create_BBParser($text, $mode = "posts", $youtube_enabled = false):string; //@todo: rename
+    function convert_BB_to_HTML($text, $mode = "posts", $youtube_enabled = false):string;
     function rewrite_hrefs_to_blank(string $text):string;
 
     function ddd(...$args);
@@ -67,8 +67,10 @@ if (!function_exists('getEngineVersion')) {
     }
 }
 
-if (!function_exists('create_BBParser')) {
+if (!function_exists('convert_BB_to_HTML')) {
     /**
+     * convert_BB_to_HTML
+     *
      * BB Parsing method
      * Используется ТОЛЬКО для юзерконтента
      *
@@ -77,7 +79,7 @@ if (!function_exists('create_BBParser')) {
      * @param bool $youtube_enabled
      * @return string|string[]|null
      */
-    function create_BBParser($text, $mode = "posts", $youtube_enabled = false):string
+    function convert_BB_to_HTML($text, $mode = "posts", $youtube_enabled = false):string
     {
         $sizes = array(
             "posts" => array(560, 340),
@@ -263,15 +265,16 @@ if (!function_exists('pluralForm')) {
         if (is_string($forms)) {
             $forms = explode($forms, $glue);
         } elseif (!is_array($forms)) {
-            return null;
+            return '';
         }
 
-        if (count($forms) != 3) return null;
+        if (count($forms) != 3) return '';
 
         return
-            $number % 10 == 1 && $number % 100 != 11 ?
-                $forms[0] :
-                ($number % 10 >= 2 && $number % 10 <= 4 && ($number % 100 < 10 || $number % 100 >= 20)
+            ($number % 10 == 1 && $number % 100 != 11)
+                ? $forms[0]
+                : (
+                    ($number % 10 >= 2 && $number % 10 <= 4 && ($number % 100 < 10 || $number % 100 >= 20))
                     ? $forms[1]
                     : $forms[2]
                 );
