@@ -9,7 +9,7 @@ interface SBCommonInterface
 
     public static function getRandomFilename(int $length = 20, string $suffix = ''):string;
 
-    public static function redirectCode(string $uri, bool $redirect = false, int $code = 302);
+    public static function redirectCode(string $uri, bool $replace_prev_headers = false, int $code = 302);
 }
 
 class SBCommon implements SBCommonInterface
@@ -109,10 +109,10 @@ class SBCommon implements SBCommonInterface
      * see also https://gist.github.com/phoenixg/5326222
      *
      * @param $uri
-     * @param bool $redirect
+     * @param bool $replace_prev_headers
      * @param int $code
      */
-    public static function redirectCode(string $uri, bool $redirect = false, int $code = 302)
+    public static function redirectCode(string $uri, bool $replace_prev_headers = false, int $code = 302)
     {
         $scheme = (self::is_ssl() ? "https://" : "http://");
         $code = array_key_exists($code, self::HTTP_CODES) ? self::HTTP_CODES[$code] : self::HTTP_CODES[302];
@@ -120,10 +120,11 @@ class SBCommon implements SBCommonInterface
         header($code);
 
         if (strstr($uri, "http://") or strstr($uri, "https://")) {
-            header("Location: " . $uri, $redirect, $code);
+            header("Location: " . $uri, $replace_prev_headers, $code);
         } else {
-            header("Location: {$scheme}" . $_SERVER['HTTP_HOST'] . $uri, $redirect, $code);
+            header("Location: {$scheme}" . $_SERVER['HTTP_HOST'] . $uri, $replace_prev_headers, $code);
         }
+        exit(0);
     }
 
     public static function is_ssl()

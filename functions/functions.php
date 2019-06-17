@@ -22,7 +22,7 @@ interface SteamBoatFunctions {
 
     function convertUTF16E_to_UTF8(string $t):string;
 
-    function redirect($uri, $redir = false, $code = 302); //@todo: rename
+    function http_redirect($uri, $replace_prev_headers = false, $code = 302);
 
     function logSiteUsage(string $scope, string $value);
     function logCronMessage($message = '', $mode = 'notice', ...$args); //@todo: говнокод
@@ -310,22 +310,18 @@ if (!function_exists('convertUTF16E_to_UTF8')) {
 
 }
 
-if (!function_exists('redirect')) {
+if (!function_exists('http_redirect')) {
 
-    /**
-     * @param $uri
-     * @param bool $redir
-     * @param int $code
-     */
-    function redirect($uri, $redir = false, $code = 302)
+    function http_redirect($uri, $replace_prev_headers = false, $code = 302)
     {
         $default_scheme = getenv('REDIRECT_DEFAULT_SCHEME') ?: 'http://';
 
         if (strstr($uri, "http://") or strstr($uri, "https://")) {
-            header("Location: " . $uri, $redir, $code);
+            header("Location: " . $uri, $replace_prev_headers, $code);
         } else {
-            header("Location: {$default_scheme}{$_SERVER['HTTP_HOST']}{$uri}", $redir, $code);
+            header("Location: {$default_scheme}{$_SERVER['HTTP_HOST']}{$uri}", $replace_prev_headers, $code);
         }
+        exit(0);
     }
 }
 
