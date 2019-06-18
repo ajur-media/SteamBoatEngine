@@ -22,7 +22,7 @@ interface SBEngineInterface
 
     public static function getContentPath(string $type = "photos", string $creation_date = ''): string;
 
-    public static function getContentURL(string $type = "photos", string $creation_date = '', bool $final_slash = true): string;
+    public static function getContentURL(string $type = "photos", $creation_date = '', bool $final_slash = true): string;
 
     public static function loadCurrencies(): array;
 
@@ -255,7 +255,7 @@ class SBEngine implements SBEngineInterface
      * @param bool $final_slash
      * @return string
      */
-    public static function getContentURL(string $type = "photos", string $creation_date = '', bool $final_slash = true): string
+    public static function getContentURL(string $type = "photos", $creation_date = '', bool $final_slash = true): string
     {
         $directory_separator = DIRECTORY_SEPARATOR;
         $cdate = empty($creation_date) ? time() : strtotime($creation_date);
