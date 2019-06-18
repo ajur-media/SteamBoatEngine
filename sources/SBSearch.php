@@ -33,7 +33,6 @@ class SBSearch implements SBSearchInterface
     /**
      * @var Connection
      */
-    private static $sphql_connection;
     private static $sphinx_connection_host;
     private static $sphinx_connection_port;
 

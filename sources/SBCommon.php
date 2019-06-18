@@ -127,6 +127,10 @@ class SBCommon implements SBCommonInterface
         exit(0);
     }
 
+    /**
+     *
+     * @return bool
+     */
     public static function is_ssl()
     {
         if (isset($_SERVER['HTTPS'])) {

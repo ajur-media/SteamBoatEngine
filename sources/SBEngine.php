@@ -52,7 +52,6 @@ class SBEngine implements SBEngineInterface
     /**
      *
      * @param array $options
-     * @throws Exception
      */
     public static function init(array $options)
     {
@@ -121,7 +120,6 @@ class SBEngine implements SBEngineInterface
      * Функция автолоадера классов
      *
      * @param $class
-     * @throws Exception
      */
     public static function engine_class_loader(string $class)
     {
