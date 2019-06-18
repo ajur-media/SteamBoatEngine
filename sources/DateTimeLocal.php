@@ -21,7 +21,7 @@ interface DateTimeLocalInterface
 
 class DateTimeLocal implements DateTimeLocalInterface
 {
-    const VERSION = '1.11';
+    const VERSION = '1.12';
 
     // old: tMonth
     public static $tMonth = array(
@@ -96,7 +96,7 @@ class DateTimeLocal implements DateTimeLocalInterface
      *
      * @return false|int
      */
-    public static function convertDatetimeToTimestamp(string $datetime, string $format = 'd-m-Y H:i:s'):int
+    public static function convertDatetimeToTimestamp(string $datetime, string $format = 'Y-m-d H:i:s'):int
     {
         return intval(date_format(date_create_from_format($format, $datetime), 'U'));
     }
@@ -110,7 +110,7 @@ class DateTimeLocal implements DateTimeLocalInterface
      * @param string $format
      * @return string
      */
-    public static function convertDateToTimestamp(string $date, string $format = 'd-m-Y'): int
+    public static function convertDateToTimestamp(string $date, string $format = 'Y-m-d'): int
     {
         return intval(date_format(date_create_from_format($format, $date), 'U'));
     }
