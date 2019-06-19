@@ -12,6 +12,8 @@ interface DateTimeLocalInterface
 {
     public static function getMonth(int $index): string;
 
+    public static function convertDate(string $datetime, bool $is_show_time = false, string $year_suffix = 'г.'):string;
+
     public static function convertDateRu(string $datetime, bool $is_show_time = false, string $year_suffix = 'г.'): string;
 
     public static function convertDatetimeToTimestamp(string $datetime, string $format = 'd-m-Y H:i:s'): int;
@@ -21,7 +23,7 @@ interface DateTimeLocalInterface
 
 class DateTimeLocal implements DateTimeLocalInterface
 {
-    const VERSION = '1.12';
+    const VERSION = '1.13';
 
     // old: tMonth
     public static $tMonth = array(
@@ -45,6 +47,11 @@ class DateTimeLocal implements DateTimeLocalInterface
 
     /**
      * Хелпер, оставлен для совместимости.
+     *
+     * @param string $datetime
+     * @param bool $is_show_time
+     * @param string $year_suffix
+     * @return string
      */
     public static function convertDateRu(string $datetime, bool $is_show_time = false, string $year_suffix = 'г.'):string
     {
