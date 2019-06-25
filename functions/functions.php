@@ -7,6 +7,8 @@ use Arris\AppLogger;
 use SteamBoat\BBParser;
 
 interface SteamBoatFunctions {
+    const VERSION = '1.17.0';
+
     function getEngineVersion():array;
 
     function convert_BB_to_HTML($text, $mode = "posts", $youtube_enabled = false):string;
@@ -289,7 +291,6 @@ if (!function_exists('convertUTF16E_to_UTF8')) {
      * https://secure.php.net/manual/ru/function.utf8-encode.php
      */
 
-
     /**
      * Переименовываем в convertUTF16E_to_UTF8
      *
@@ -325,13 +326,13 @@ if (!function_exists('http_redirect')) {
     }
 }
 
-if (!function_exists('logSiteUsage')) {
-
+if (!function_exists('logSiteUsageShort')) {
     /**
-     * @param $scope
-     * @param $value
+     *
+     * @param string $scope
+     * @param string $value
      */
-    function logSiteUsage(string $scope, string $value)
+    function logSiteUsageShort(string $scope, string $value)
     {
         if (getenv('DEBUG_LOG_SITEUSAGE')) AppLogger::scope($scope)->notice("Usage: ", [
             round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
@@ -340,6 +341,41 @@ if (!function_exists('logSiteUsage')) {
             $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
         ]);
     }
+}
+
+if (!function_exists('logSiteUsage')) {
+    /**
+     *
+     *
+     * @param \Monolog\Logger $logger_instance
+     * @param string $site_area
+     * @param array $mysql_stats
+     */
+    function logSiteUsage(\Monolog\Logger $logger_instance, string $site_area, array $mysql_stats)
+    {
+        if (empty($mysql_stats)) $mysql_stats = ['mysql_query_time' => null, 'mysql_query_count' => null];
+
+        if (getenv('DEBUG_LOG_SITEUSAGE')) {
+            $logger_instance->notice("Usage", [
+                $_SERVER['REMOTE_ADDR'],
+                'Time',
+                round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
+                'Memory',
+                memory_get_usage(),
+                'MySQL',
+                [
+                    'Time',
+                    $mysql_stats['mysql_query_time'],
+                    'Queries',
+                    $mysql_stats['mysql_query_count']
+                ],
+                $site_area,
+                $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
+            ]);
+        }
+    }
+
+
 }
 
 if (!function_exists('logCronMessage')) {
