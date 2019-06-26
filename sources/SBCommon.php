@@ -7,14 +7,14 @@ interface SBCommonInterface
 {
     public static function getRandomString(int $length):string;
 
-    public static function getRandomFilename(int $length = 20, string $suffix = ''):string;
+    public static function getRandomFilename(int $length = 20, string $suffix = '', $prefix_format = 'Ymd'):string;
 
     public static function redirectCode(string $uri, bool $replace_prev_headers = false, int $code = 302);
 }
 
 class SBCommon implements SBCommonInterface
 {
-    const VERSION = '1.22';
+    const VERSION = '1.23';
 
     const HTTP_CODES = array(
         100 => "HTTP/1.1 100 Continue",
@@ -82,12 +82,19 @@ class SBCommon implements SBCommonInterface
     }
 
     /**
-     * Новый механизм имён генерации файлов
+     * Генерируем новое имя файла на основе даты.
+     * Формат: ПРЕФИКС + СОЛЬ + СУФФИКС
      *
-     * @param int $length
+     * ПРЕФИКС делается на основе текущей (!) даты по переданной маске. Если маска пустая - префикс пуст
+     * СОЛЬ - случайная строка [a-z0-9]
+     * СУФФИКС - строка, если не пуста - заменяется на "{суффикс}"
+     *
+     * @param int $length - длина соли
+     * @param string $suffix - суффикс имени файла.
+     * @param string $prefix_format - формат даты в префиксе (Ymd)
      * @return string
      */
-    public static function getRandomFilename(int $length = 20, string $suffix = ''):string
+    public static function getRandomFilename(int $length = 20, string $suffix = '', $prefix_format = 'Ymd'):string
     {
         $dictionary = self::DICTIONARY;
         $dictionary_len = strlen($dictionary);
@@ -100,8 +107,7 @@ class SBCommon implements SBCommonInterface
             $salt .= $dictionary[mt_rand(0, $dictionary_len - 1)];
         }
 
-        // equal `(new DateTime())->format('Ymd')` without exception
-        return (date_format(date_create(), 'Ymd')) . '_' . $salt . $suffix;
+        return (date_format(date_create(), $prefix_format)) . '_' . $salt . $suffix;
     }
 
     /**
