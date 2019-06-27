@@ -32,7 +32,7 @@ interface MySQLWrapperInterface
 
 class MySQLWrapper implements MySQLWrapperInterface
 {
-    const VERSION = '1.17.15';
+    const VERSION = '1.17.16';
 
     const DEFAULT_CHARSET = 'utf8';
 
@@ -77,7 +77,6 @@ class MySQLWrapper implements MySQLWrapperInterface
      *
      * @param $config
      * @param string $suffix
-     * @throws Exception
      */
     public function __construct($config, $suffix = 'DATA')
     {
@@ -146,13 +145,21 @@ class MySQLWrapper implements MySQLWrapperInterface
         }
     }
 
+    /**
+     *
+     */
     public function close()
     {
         mysqli_close($this->db);
     }
 
-    // запрос в базу
-
+    /**
+     * множественный запрос в базу
+     *
+     * @param $query
+     * @param bool $debug
+     * @return bool
+     */
     public function multi_query($query, $debug = false)
     {
         $this->mysqlcountquery++;
@@ -172,8 +179,12 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $result;
     }
 
-    // запрос в базу
-
+    /**
+     * получение данных
+     *
+     * @param $result
+     * @return array|null
+     */
     public function fetch($result)
     {
         if (is_null($result) and isset($this->result)) {
@@ -196,20 +207,37 @@ class MySQLWrapper implements MySQLWrapperInterface
         }
     }
 
+    /**
+     *
+     *
+     * @param $res
+     * @return int
+     */
     public function num_rows($res)
     {
         return mysqli_num_rows($res);
     }
 
+    /**
+     *
+     * @return int|string
+     */
     public function insert_id()
     {
         return mysqli_insert_id($this->db);
     }
 
+    /**
+     * @param $fields
+     * @param $table
+     * @param null $hash
+     * @param null $joins
+     * @param bool $needpages
+     * @return string
+     */
     public function create($fields, $table, $hash = null, $joins = null, $needpages = true)
     {
         $where = "";
-        $dwhere = "";
         $limit = "";
         $perpage = 0;
         $own_cond = "";
@@ -390,6 +418,11 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $query . $limit;
     }
 
+    /**
+     * @param $query
+     * @param bool $log_sql_request
+     * @return bool|mysqli_result
+     */
     public function query($query, $log_sql_request = false)
     {
         if ($log_sql_request)
@@ -431,6 +464,11 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $result;
     }
 
+    /**
+     * @param $res
+     * @param $row
+     * @return mixed
+     */
     public function result($res, $row)
     {
         $r = mysqli_fetch_array($res);
