@@ -3,6 +3,7 @@
 
 namespace SteamBoat;
 
+use Arris\DB;
 use Exception;
 use mysqli_result;
 use Arris\AppLogger;
@@ -473,6 +474,38 @@ class MySQLWrapper implements MySQLWrapperInterface
     {
         $r = mysqli_fetch_array($res);
         return $r[$row];
+    }
+
+    public function pdo_query($query, $dataset)
+    {
+        $time_start = microtime(true);
+
+        $sth = DB::C()->prepare($query);
+
+        $result = $sth->execute($dataset);
+
+        $time_consumed = microtime(true) - $time_start;
+
+        if (!$result) {
+            $this->request_error = true;
+            AppLogger::scope('mysql')->error("PDO::execute() error: ", [
+                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
+                DB::C()->errorInfo(),
+                $query
+            ]);
+        }
+
+        if (($time_consumed > getenv('DB_SLOW_QUERY_THRESHOLD'))) {
+            AppLogger::scope('mysql')->info("PDO::execute() slow: ", [
+                $time_consumed,
+                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
+                $query
+            ]);
+        }
+
+        $this->mysqlquerytime += $time_consumed;
+        $this->result = $result;
+        return $result;
     }
 
 }
