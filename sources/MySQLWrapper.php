@@ -503,9 +503,17 @@ class MySQLWrapper implements MySQLWrapperInterface
             ]);
         }
 
+        unset($sth);
+
+        $this->mysqlcountquery++;
         $this->mysqlquerytime += $time_consumed;
         $this->result = $result;
         return $result;
+    }
+
+    public function pdo_last_insert_id()
+    {
+        return DB::C()->lastInsertId();
     }
 
 }
