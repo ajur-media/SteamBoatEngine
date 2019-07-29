@@ -1,6 +1,5 @@
 <?php
 
-
 namespace SteamBoat;
 
 use Exception;
@@ -22,13 +21,15 @@ interface SBSearchInterface
 
     public static function rt_ReplaceIndex(string $index_name, array $updateset);
 
+    public static function rt_UpdateIndex(string $index_name, array $updateset);
+
     public static function get_IDs_DataSet(string $search_query, string $source_index, string $sort_field, string $sort_order = 'DESC', int $limit = 5, array $option_weight = []): array;
 }
 
 
 class SBSearch implements SBSearchInterface
 {
-    const VERSION = "1.22";
+    const VERSION = "1.23";
 
     /**
      * @var Connection
@@ -113,9 +114,25 @@ class SBSearch implements SBSearchInterface
     }
 
     /**
-     * Загружает список айдишников из сфинкс-индекса по переданному запросу.
+     * Обновляет (UPDATE) реалтайм-индекс по набору данных
      *
-     * Старые названия метода: getDataSetFromSphinx
+     * @param string $index_name
+     * @param array $updateset
+     * @return ResultSetInterface|null
+     */
+    public static function rt_UpdateIndex(string $index_name, array $updateset)
+    {
+        if (empty($updateset)) return null;
+
+        return self::createConnection()
+            ->update($index_name)
+            ->into($index_name)
+            ->set($updateset)
+            ->execute();
+    }
+
+    /**
+     * Загружает список айдишников из сфинкс-индекса по переданному запросу.
      *
      * @param string $search_query      - строка запроса
      * @param string $source_index      - имя индекса
