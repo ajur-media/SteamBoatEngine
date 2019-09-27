@@ -375,6 +375,8 @@ if (!function_exists('logSiteUsage')) {
         }
 
         if (getenv('LOGGING.SITE_USAGE') && $logger instanceof \Monolog\Logger) {
+            unset($metrics['time.start']);
+            unset($metrics['time.end']);
             $logger->notice('Metrics:', $metrics);
         }
     }
