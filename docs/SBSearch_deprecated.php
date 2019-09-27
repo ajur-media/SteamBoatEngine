@@ -1,35 +1,10 @@
 <?php
 
-namespace SteamBoat;
-
-use Exception;
-use Foolz\SphinxQL\Drivers\Mysqli\Connection;
-use Foolz\SphinxQL\Drivers\ResultSetInterface;
-use Foolz\SphinxQL\Exception\DatabaseException;
-use Foolz\SphinxQL\SphinxQL;
 use Arris\AppLogger;
+use Foolz\SphinxQL\Drivers\Mysqli\Connection;
+use Foolz\SphinxQL\SphinxQL;
 
-interface SBSearchInterface
-{
-    public static function init(string $sphinx_connection_host, string $sphinx_connection_port);
-
-    public static function createConnection();
-
-    public static function C();
-
-    public static function rt_DeleteIndex(string $index_name, string $field, $field_value = null);
-
-    public static function rt_ReplaceIndex(string $index_name, array $updateset);
-
-    public static function rt_UpdateIndex(string $index_name, array $updateset);
-
-    public static function get_IDs_DataSet(string $search_query, string $source_index, string $sort_field, string $sort_order = 'DESC', int $limit = 5, array $option_weight = []): array;
-}
-
-
-class SBSearch implements SBSearchInterface
-{
-    const VERSION = "1.23";
+class SBSearch_deprecated {
 
     /**
      * @var Connection
@@ -37,33 +12,17 @@ class SBSearch implements SBSearchInterface
     private static $sphinx_connection_host;
     private static $sphinx_connection_port;
 
-    /**
-     * Задает хост/порт для коннекшенов через SphinxQL-интерфейс
-     *
-     * @param string $sphinx_connection_host
-     * @param string $sphinx_connection_port
-     */
     public static function init(string $sphinx_connection_host, string $sphinx_connection_port)
     {
         self::$sphinx_connection_host = $sphinx_connection_host;
         self::$sphinx_connection_port = $sphinx_connection_port;
     }
 
-    /**
-     * Создает инстанс SphinxQL, алиас для createConnection()
-     *
-     * @return SphinxQL
-     */
     public static function C()
     {
         return self::createConnection();
     }
 
-    /**
-     * Создает инстанс SphinxQL
-     *
-     * @return SphinxQL
-     */
     public static function createConnection()
     {
         $conn = new Connection();
@@ -74,63 +33,6 @@ class SBSearch implements SBSearchInterface
 
         return (new SphinxQL($conn));
     }
-
-    /**
-     * Удаляет строку реалтайм-индекса
-     *
-     * @param $index_name -- индекс
-     * @param $field -- поле для поиска индекса
-     * @param null $field_value -- значение для поиска индекса
-     *
-     * @return ResultSetInterface|null
-     */
-    public static function rt_DeleteIndex(string $index_name, string $field, $field_value = null)
-    {
-        if (is_null($field_value)) return null;
-
-        return self::createConnection()
-            ->delete()
-            ->from($index_name)
-            ->where($field, '=', $field_value)
-            ->execute();
-    }
-
-    /**
-     * Обновляет (REPLACE) реалтайм-индекс по набору данных
-     *
-     * @param string $index_name
-     * @param array $updateset
-     * @return ResultSetInterface|null
-     */
-    public static function rt_ReplaceIndex(string $index_name, array $updateset)
-    {
-        if (empty($updateset)) return null;
-
-        return self::createConnection()
-            ->replace()
-            ->into($index_name)
-            ->set($updateset)
-            ->execute();
-    }
-
-    /**
-     * Обновляет (UPDATE) реалтайм-индекс по набору данных
-     *
-     * @param string $index_name
-     * @param array $updateset
-     * @return ResultSetInterface|null
-     */
-    public static function rt_UpdateIndex(string $index_name, array $updateset)
-    {
-        if (empty($updateset)) return null;
-
-        return self::createConnection()
-            ->update($index_name)
-            ->into($index_name)
-            ->set($updateset)
-            ->execute();
-    }
-
     /**
      * Загружает список айдишников из сфинкс-индекса по переданному запросу.
      *
@@ -194,8 +96,4 @@ class SBSearch implements SBSearchInterface
 
         return $found_dataset;
     } // get_IDs_DataSet()
-
-
-} // class SBSearch
-
-# -eof- #
+}

@@ -36,7 +36,6 @@ interface SteamBoatFunctions {
     function parseUploadError(array $upload_data, $where = __METHOD__):string;
 }
 
-
 if (!function_exists('getEngineVersion')) {
 
     /**
@@ -311,21 +310,6 @@ if (!function_exists('convertUTF16E_to_UTF8')) {
 
 }
 
-if (!function_exists('http_redirect')) {
-
-    function http_redirect($uri, $replace_prev_headers = false, $code = 302)
-    {
-        $default_scheme = getenv('REDIRECT_DEFAULT_SCHEME') ?: 'http://';
-
-        if (strstr($uri, "http://") or strstr($uri, "https://")) {
-            header("Location: " . $uri, $replace_prev_headers, $code);
-        } else {
-            header("Location: {$default_scheme}{$_SERVER['HTTP_HOST']}{$uri}", $replace_prev_headers, $code);
-        }
-        exit(0);
-    }
-}
-
 if (!function_exists('logSiteUsageShort')) {
     /**
      *
@@ -343,15 +327,72 @@ if (!function_exists('logSiteUsageShort')) {
     }
 }
 
-if (!function_exists('logSiteUsage')) {
+if (!function_exists('getSiteUsageMetrics')) {
+
     /**
+     * Функция сбора метрик статистики сайта
      *
+     * @param \SteamBoat\MySQLWrapper $mysql
+     * @param array $config
+     * @return array
+     */
+    function getSiteUsageMetrics(\SteamBoat\MySQLWrapper $mysql, array $config)
+    {
+        return [
+            'memory.usage'      =>  memory_get_usage(true),
+            'memory.peak'       =>  memory_get_peak_usage(true),
+            'mysql.query_count' =>  $mysql->mysqlcountquery,
+            'mysql.query_time'  =>  round($mysql->mysqlquerytime, 3),
+            'time.start'        =>  $_SERVER['REQUEST_TIME'],
+            'time.end'          =>  microtime(true),
+            'time.total'        =>  round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
+            'site.routed'       =>  $config['ROUTED'],
+            'site.url'          =>  $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
+        ];
+    }
+}
+
+if (!function_exists('logSiteUsage')) {
+
+    /**
+     * Функция логгирования собранных метрик и, возможно, печати их в поток вывода
+     *
+     * @param \Monolog\Logger $logger
+     * @param array $metrics
+     * @param bool $is_print
+     */
+    function logSiteUsage(\Monolog\Logger $logger, array $metrics, bool $is_print)
+    {
+        if ($is_print) {
+            $site_usage_stats = sprintf(
+                '<!-- Consumed memory: %u bytes, SQL query count: %u, SQL time %g sec, Total time: %g sec. -->',
+                $metrics['memory.usage'],
+                $metrics['mysql.query_count'],
+                $metrics['mysql.query_time'],
+                $metrics['time.total']
+            );
+            echo $site_usage_stats;
+        }
+
+        if (getenv('LOGGING.SITE_USAGE') && $logger instanceof \Monolog\Logger) {
+            $logger->notice('Metrics:', $metrics);
+        }
+    }
+}
+
+
+if (!function_exists('logSiteUsage_v2')) {
+    /**
+     * Старая функция логгирования, используется в "августовских" логах
+     *
+     * 47news до версии 1.24.0
+     * DP до версии 2.9.0
      *
      * @param \Monolog\Logger $logger_instance
      * @param string $site_area
      * @param array $mysql_stats
      */
-    function logSiteUsage(\Monolog\Logger $logger_instance, string $site_area, array $mysql_stats)
+    function logSiteUsage_v2(\Monolog\Logger $logger_instance, string $site_area, array $mysql_stats)
     {
         if (empty($mysql_stats)) $mysql_stats = ['mysql_query_time' => null, 'mysql_query_count' => null];
 
@@ -374,8 +415,26 @@ if (!function_exists('logSiteUsage')) {
             ]);
         }
     }
+}
 
+if (!function_exists('logSiteUsage_v1')) {
 
+    /**
+     * Логгирование использования сайта
+     * Используется на FFI включая версию 1.17.4 как logSiteUsage
+     *
+     * @param $scope
+     * @param $value
+     */
+    function logSiteUsage_v1(string $scope, string $value)
+    {
+        if (getenv('DEBUG_LOG_SITEUSAGE')) AppLogger::scope($scope)->notice("Usage: ", [
+            round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
+            memory_get_usage(),
+            $value,
+            $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
+        ]);
+    }
 }
 
 if (!function_exists('logCronMessage')) {

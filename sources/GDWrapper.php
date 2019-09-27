@@ -9,58 +9,51 @@
 namespace SteamBoat;
 
 use Arris\AppLogger;
-use Exception;
+use Monolog\Logger;
+use function Arris\setOption as setOption;
 
-interface GDWrapperInterface
-{
-
-    public static function init();
-
-    public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
-
-    public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool ;
-
-    public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool ;
-
-    public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
-
-    public static function addWaterMark(string $fn_source, array $params, int $pos_index):bool;
-
-    public static function rotate(string $fn_source, string $dist = ""):bool;
-
-    public static function rotate2(string $fn_source, string $dist = ""):bool ;
-}
-
+/**
+ * Class GDWrapper
+ * @package SteamBoat
+ *
+ *  * Использует уровни логгирования:
+ * - error - ошибка: как правило, не найден файл
+ *
+ */
 class GDWrapper implements GDWrapperInterface
 {
-    const VERSION = "3.0";
+    const VERSION = "4.0";
 
+    /**
+     * @var int
+     */
     public static $default_jpeg_quality = 100;
 
-    public static function init()
-    {
-        self::$default_jpeg_quality = getenv('ADMIN_JPEG_COMPRESSION_QUALITY') ?: 100;
+    /**
+     * @var Logger $logger
+     */
+    public static $logger = null;
 
-        if (getenv('DEBUG_LOG_CONSTRUCTOR_CALL')) {
-            AppLogger::scope('main')->info("Created static " . __CLASS__ . " from " . __FILE__, [microtime(true)]);
+    public static function init($options, $logger = null)
+    {
+        self::$default_jpeg_quality = setOption($options, 'JPEG_COMPRESSION_QUALITY', 'STORAGE.JPEG_COMPRESSION_QUALITY', 100);
+
+        self::$default_jpeg_quality
+            = is_integer(self::$default_jpeg_quality)
+            ? min(self::$default_jpeg_quality, 100)
+            : 100;
+
+        if ($logger instanceof Logger) {
+            self::$logger = $logger;
+        } else {
+            self::$logger = AppLogger::addNullLogger();
         }
     }
 
-    /**
-     * вписывает изображение в указанные размеры
-     *
-     * = resizeimageaspect()
-     *
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth
-     * @param $maxheight
-     * @return bool
-     */
     public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source)) {
-            AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
+        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+            self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
 
@@ -101,6 +94,8 @@ class GDWrapper implements GDWrapperInterface
     }
 
     /**
+     * Создает изображение из файла
+     *
      * @param $fname
      * @param $type
      * @return array
@@ -112,9 +107,6 @@ class GDWrapper implements GDWrapperInterface
         } else if ($type == IMAGETYPE_PSD) {
             $ext = 'psd';
             $im = imagecreatefrompsd($fname);
-        } else if ($type == IMAGETYPE_SWF) {
-            $ext = 'swf';
-            $im = imagecreatefromswf($fname);
         } else if ($type == IMAGETYPE_PNG) {
             $ext = 'png';
             $im = imagecreatefrompng($fname);
@@ -185,20 +177,9 @@ class GDWrapper implements GDWrapperInterface
         return $result;
     }
 
-    /**
-     * Ресайзит картинку по большей из сторон
-     *
-     * = resizepictureaspect()
-     *
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth
-     * @param $maxheight
-     * @return bool
-     */
     public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source)) {
+        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
             AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
@@ -242,20 +223,10 @@ class GDWrapper implements GDWrapperInterface
         }
     }
 
-    /**
-     *
-     * = verticalimage()
-     *
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth
-     * @param $maxheight
-     * @return bool
-     */
     public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source)) {
-            AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
+        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+            self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
 
@@ -291,21 +262,10 @@ class GDWrapper implements GDWrapperInterface
         }
     }
 
-    /**
-     * Ресайзит картинку в фиксированные размеры
-     *
-     * = getfixedpicture()
-     *
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth - maximal target width
-     * @param $maxheight - maximal target height
-     * @return bool
-     */
     public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source)) {
-            AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
+        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+            self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
 
@@ -392,19 +352,6 @@ class GDWrapper implements GDWrapperInterface
         }
     }
 
-
-    /* ====================================================================================================== */
-
-    /**
-     * Добавляет на изображение вотермарк (
-     *
-     * = addwatermark()
-     *
-     * @param string $fn_source
-     * @param array $params
-     * @param int $pos_index
-     * @return bool
-     */
     public static function addWaterMark(string $fn_source, array $params, int $pos_index):bool
     {
         $watermark = $params['watermark'];
@@ -469,20 +416,10 @@ class GDWrapper implements GDWrapperInterface
         }
     }
 
-    /**
-     * Используется на 47news
-     *
-     *
-     * = rotate2()
-     *
-     * @param $fn_source
-     * @param string $dist
-     * @return bool
-     */
     public static function rotate2(string $fn_source, string $dist = ""):bool
     {
-        if (!is_readable($fn_source)) {
-            AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
+        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+            self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
 
@@ -507,19 +444,10 @@ class GDWrapper implements GDWrapperInterface
         }
     }
 
-    /**
-     * NEVER USED
-     *
-     * = rotate()
-     *
-     * @param $fn_source
-     * @param string $dist
-     * @return bool
-     */
     public static function rotate(string $fn_source, string $dist = ""):bool
     {
-        if (!is_readable($fn_source)) {
-            AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
+        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+            self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
 
@@ -553,23 +481,12 @@ class GDWrapper implements GDWrapperInterface
     {
         $width = imagesx($img);
         $height = imagesy($img);
-        switch ($rotation) {
-            case 90:
-                $newimg = @imagecreatetruecolor($height, $width);
-                break;
-            case 180:
-                $newimg = @imagecreatetruecolor($width, $height);
-                break;
-            case 270:
-                $newimg = @imagecreatetruecolor($height, $width);
-                break;
-            case 0:
-                return $img;
-                break;
-            case 360:
-                return $img;
-                break;
+        if ($rotation == 0 || $rotation == 360) {
+            return $img;
         }
+
+        $newimg = @imagecreatetruecolor($height, $width);
+
         if ($newimg) {
             for ($i = 0; $i < $width; $i++) {
                 for ($j = 0; $j < $height; $j++) {
@@ -598,4 +515,4 @@ class GDWrapper implements GDWrapperInterface
         return false;
     }
 
-}
+} # -eof-

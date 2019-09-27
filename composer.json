@@ -32,7 +32,7 @@
       "functions/helpers.php"
     ],
     "psr-4": {
-      "SteamBoat\\"           : "sources/"
+      "SteamBoat\\"           : ["sources/", "interfaces/"]
     }
   }
 }

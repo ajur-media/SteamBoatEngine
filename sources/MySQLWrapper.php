@@ -5,41 +5,28 @@ namespace SteamBoat;
 
 use Arris\DB;
 use Exception;
+use Monolog\Logger;
 use mysqli_result;
 use Arris\AppLogger;
 
-interface MySQLWrapperInterface
-{
-    public function __construct($config, $suffix = 'DATA');
-
-    public function connect();
-
-    public function close();
-
-    public function query($query, $log_sql_request = false);
-
-    public function multi_query($query, $debug = false);
-
-    public function result($res, $row);
-
-    public function fetch($result);
-
-    public function num_rows($res);
-
-    public function insert_id();
-
-    public function create($fields, $table, $hash = null, $joins = null, $needpages = true);
-}
-
+/**
+ * Class MySQLWrapper
+ * @package SteamBoat
+ *
+ * Использует уровни логгирования:
+ * - emergency - фатальная ошибка с БД
+ * - error - ошибка выполнения запроса
+ * - debug - SQL query debug
+ * - info - логгирование медленных запросов
+ *
+ */
 class MySQLWrapper implements MySQLWrapperInterface
 {
-    const VERSION = '1.17.16';
+    const VERSION = '2.0';
 
     const DEFAULT_CHARSET = 'utf8';
 
     const DEFAULT_CHARSET_COLLATE = 'utf8_general_ci';
-
-    public $connection_instantiator = null;
 
     public $hostname;
     public $username;
@@ -66,7 +53,9 @@ class MySQLWrapper implements MySQLWrapperInterface
     public $db_config = [];
 
     public $total = 0;
-    public $pages = array();
+    public $pages = [];
+
+    public $options = [];
 
     /**
      * @var bool MySQLi Request Error
@@ -74,20 +63,25 @@ class MySQLWrapper implements MySQLWrapperInterface
     public $request_error = false;
 
     /**
-     * mysql constructor.
-     *
-     * @param $config
-     * @param string $suffix
+     * @var
      */
-    public function __construct($config, $suffix = 'DATA')
+    private $_logger = null;
+
+    public function __construct($config, $logger = null)
     {
-        if (!array_key_exists($suffix, $config['DB_CONNECTIONS'])) {
-            AppLogger::scope('mysql')->emergency('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB_CONNECTIONS collection does not contain given suffix', [$suffix]);
-            die('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB_CONNECTIONS collection does not contain given suffix : `' . $suffix . '`');
+        if ($logger instanceof Logger) {
+            $this->_logger = $logger;
+        } else {
+            $this->_logger = AppLogger::addNullLogger();
         }
 
-        $this->db_config = $config['DB_CONNECTIONS'][$suffix];
-        $this->connection_instantiator = $suffix;
+        $this->options[ 'DB_SLOW_QUERY_THRESHOLD' ] = getenv('DB_SLOW_QUERY_THRESHOLD');
+
+        if (empty($config)) {
+            $this->_logger->emergency('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB Config is empty', [var_export($config, true)]);
+        }
+
+        $this->db_config = $config;
 
         $this->hostname = $this->db_config['hostname'];
         $this->port = $this->db_config['port'];
@@ -114,16 +108,13 @@ class MySQLWrapper implements MySQLWrapperInterface
         $this->connect();
     }
 
-    /**
-     * Коннект к базе
-     */
     public function connect()
     {
         $this->db = mysqli_connect($this->hostname, $this->username, $this->password, $this->database, $this->port);
 
         if (mysqli_connect_error()) {
 
-            AppLogger::scope('mysql')->emergency('[MYSQL ERROR] ', [mysqli_connect_errno(), mysqli_connect_error(), $this->db_config]);
+            $this->_logger->emergency('[MYSQL ERROR] ', [mysqli_connect_errno(), mysqli_connect_error(), $this->db_config]);
 
             die(
                 '['
@@ -146,21 +137,11 @@ class MySQLWrapper implements MySQLWrapperInterface
         }
     }
 
-    /**
-     *
-     */
     public function close()
     {
         mysqli_close($this->db);
     }
 
-    /**
-     * множественный запрос в базу
-     *
-     * @param $query
-     * @param bool $debug
-     * @return bool
-     */
     public function multi_query($query, $debug = false)
     {
         $this->mysqlcountquery++;
@@ -180,18 +161,12 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $result;
     }
 
-    /**
-     * получение данных
-     *
-     * @param $result
-     * @return array|null
-     */
     public function fetch($result)
     {
         if (is_null($result) and isset($this->result)) {
 
             if (!$this->result instanceof mysqli_result) {
-                AppLogger::scope('mysql')->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
+                $this->_logger->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
                 return null;
             } else {
                 return mysqli_fetch_assoc($this->result);
@@ -200,7 +175,7 @@ class MySQLWrapper implements MySQLWrapperInterface
         } else {
 
             if (!$result instanceof mysqli_result) {
-                AppLogger::scope('mysql')->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
+                $this->_logger->error(__METHOD__ . " tries to execute mysqli_fetch_assoc() on boolean, stack trace: ", [debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)]);
                 return null;
             } else {
                 return mysqli_fetch_assoc($result);
@@ -208,34 +183,16 @@ class MySQLWrapper implements MySQLWrapperInterface
         }
     }
 
-    /**
-     *
-     *
-     * @param $res
-     * @return int
-     */
     public function num_rows($res)
     {
         return mysqli_num_rows($res);
     }
 
-    /**
-     *
-     * @return int|string
-     */
     public function insert_id()
     {
         return mysqli_insert_id($this->db);
     }
 
-    /**
-     * @param $fields
-     * @param $table
-     * @param null $hash
-     * @param null $joins
-     * @param bool $needpages
-     * @return string
-     */
     public function create($fields, $table, $hash = null, $joins = null, $needpages = true)
     {
         $where = "";
@@ -419,15 +376,10 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $query . $limit;
     }
 
-    /**
-     * @param $query
-     * @param bool $log_sql_request
-     * @return bool|mysqli_result
-     */
     public function query($query, $log_sql_request = false)
     {
         if ($log_sql_request)
-            AppLogger::scope('mysql')->debug('[MYSQL QUERY]', [$query]);
+            $this->_logger->debug('[MYSQL QUERY]', [$query]);
 
         $error = false;
         $this->request_error = false;
@@ -445,15 +397,15 @@ class MySQLWrapper implements MySQLWrapperInterface
         $time_consumed = $time_finish - $time_start;
 
         if ($error) {
-            AppLogger::scope('mysql')->error("mysqli_query() error: ", [
+            $this->_logger->error("mysqli_query() error: ", [
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
                 mysqli_error($this->db),
                 $query
             ]);
         }
 
-        if (($time_consumed > getenv('DB_SLOW_QUERY_THRESHOLD'))) {
-            AppLogger::scope('mysql')->info("mysqli_query() slow: ", [
+        if (($time_consumed > $this->options['DB_SLOW_QUERY_THRESHOLD'])) {
+            $this->_logger->info("mysqli_query() slow: ", [
                 $time_consumed,
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
                 $query
@@ -465,22 +417,17 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $result;
     }
 
-    /**
-     * @param $res
-     * @param $row
-     * @return mixed
-     */
     public function result($res, $row)
     {
         $r = mysqli_fetch_array($res);
         return $r[$row];
     }
 
-    public function pdo_query($query, $dataset)
+    public function pdo_query($query, $dataset, $pdo_connector = NULL)
     {
         $time_start = microtime(true);
 
-        $sth = DB::C()->prepare($query);
+        $sth = DB::C($pdo_connector)->prepare($query);
 
         $result = $sth->execute($dataset);
 
@@ -488,15 +435,15 @@ class MySQLWrapper implements MySQLWrapperInterface
 
         if (!$result) {
             $this->request_error = true;
-            AppLogger::scope('mysql')->error("PDO::execute() error: ", [
+            $this->_logger->error("PDO::execute() error: ", [
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
-                DB::C()->errorInfo(),
+                DB::C($pdo_connector)->errorInfo(),
                 $query
             ]);
         }
 
-        if (($time_consumed > getenv('DB_SLOW_QUERY_THRESHOLD'))) {
-            AppLogger::scope('mysql')->info("PDO::execute() slow: ", [
+        if (($time_consumed > $this->options['DB_SLOW_QUERY_THRESHOLD'])) {
+            $this->_logger->info("PDO::execute() slow: ", [
                 $time_consumed,
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
                 $query
@@ -511,9 +458,9 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $result;
     }
 
-    public function pdo_last_insert_id()
+    public function pdo_last_insert_id($pdo_connector = null)
     {
-        return DB::C()->lastInsertId();
+        return DB::C($pdo_connector)->lastInsertId();
     }
 
-}
+} # -eof-

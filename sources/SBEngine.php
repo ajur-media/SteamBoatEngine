@@ -2,33 +2,23 @@
 
 namespace SteamBoat;
 
-use function array_diff;
+use Monolog\Logger;
 use Arris\AppLogger;
 use Exception;
+
+use function array_diff;
 use function is_dir;
-use function rmdir;
 use function scandir;
-use function unlink;
 
-interface SBEngineInterface
-{
-    public static function init(array $options);
-
-    public static function engine_prepare_classes(array $folders): array;
-
-    public static function engine_class_loader(string $class);
-
-    public static function clear_nginx_cache(string $url, string $levels = '1:2'): bool;
-
-    public static function getContentPath(string $type = "photos", string $creation_date = ''): string;
-
-    public static function getContentURL(string $type = "photos", $creation_date = '', bool $final_slash = true): string;
-
-    public static function loadCurrencies(): array;
-
-    public static function rmdir($directory): bool;
-}
-
+/**
+ * Class SBEngine
+ * @package SteamBoat
+ *
+ * Использует уровни логгирования:
+ * - emergency - фатальная ошибка инициализации
+ * - error - ошибка загрузки данных
+ *
+ */
 class SBEngine implements SBEngineInterface
 {
     const VERSION = '1.22';
@@ -47,13 +37,11 @@ class SBEngine implements SBEngineInterface
     public static $storages = [];
 
     /**
-     * @param array $options
+     * @var Logger $_logger
      */
-    /**
-     *
-     * @param array $options
-     */
-    public static function init(array $options)
+    public static $_logger;
+
+    public static function init(array $options, $logger = null)
     {
         if (!array_key_exists('PROJECT_PUBLIC', $options)) {
             die('SBEngine::init() option [PROJECT_PUBLIC] not present!');
@@ -85,14 +73,13 @@ class SBEngine implements SBEngineInterface
             = array_key_exists('STORAGE', $options)
             ? $options['STORAGE']
             : [];
+
+        self::$_logger
+            = $logger instanceof Logger
+            ? $logger
+            : AppLogger::addNullLogger();
     }
 
-    /**
-     * Возвращает подготовленный массив классов для переменной $CONFIG['classes']
-     *
-     * @param $folders
-     * @return array
-     */
     public static function engine_prepare_classes(array $folders): array
     {
         $engine_path = self::$options['PROJECT_CLASSES'];
@@ -116,11 +103,6 @@ class SBEngine implements SBEngineInterface
         return $classes_list;
     }
 
-    /**
-     * Функция автолоадера классов
-     *
-     * @param $class
-     */
     public static function engine_class_loader(string $class)
     {
         $classes_directory = self::$options['PROJECT_CLASSES'];
@@ -142,119 +124,11 @@ class SBEngine implements SBEngineInterface
         if (is_file($class_filename) && is_readable($class_filename)) {
             include($class_filename);
         } else {
-            AppLogger::scope('main')->emergency("v2 Autoloader can't find `{$class_filename}` for {$class}.", []);
+            self::$_logger->emergency("v2 Autoloader can't find `{$class_filename}` for {$class}.", []);
         }
 
     }
 
-    /**
-     * Очищает кэш NGINX
-     *
-     * @param string $url
-     * @param string $levels
-     * @return bool
-     */
-    public static function clear_nginx_cache(string $url, string $levels = '1:2'): bool
-    {
-        $unlink_status = true;
-
-        if (getenv('NGINX_CACHE_USE') == 0) {
-            return false;
-        }
-
-        if (is_null($levels)) {
-            $levels = getenv('NGINX_CACHE_LEVELS');
-        }
-
-        $cache_root = rtrim(getenv('NGINX_CACHE_PATH'), DIRECTORY_SEPARATOR);
-
-        if ($url === "/") {
-            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
-                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: requested clean whole cache");
-            }
-
-            $dir_content = array_diff(scandir($cache_root), ['.', '..']);
-
-            foreach ($dir_content as $subdir) {
-                if (is_dir($cache_root . DIRECTORY_SEPARATOR . $subdir)) {
-                    $unlink_status = $unlink_status && self::rmdir($cache_root . DIRECTORY_SEPARATOR . $subdir . '/');
-                }
-            }
-
-            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
-                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: whole cache clean status: ", [ $cache_root, $unlink_status ]);
-            }
-
-            return $unlink_status;
-        }
-
-        $url_parts = parse_url($url);
-        $url_parts['host'] = $url_parts['host'] ?? '';
-        $url_parts['path'] = $url_parts['path'] ?? '';
-
-        $cache_key = "GET|||{$url_parts['host']}|{$url_parts['path']}";
-        $cache_filename = md5($cache_key);
-
-        $levels = explode(':', $levels);
-
-        $cache_filepath = $cache_root;
-
-        $offset = 0;
-
-        foreach ($levels as $i => $level) {
-            $offset -= $level;
-            $cache_filepath .= "/" . substr($cache_filename, $offset, $level);
-        }
-
-        $cache_filepath .= "/{$cache_filename}";
-
-        if (file_exists($cache_filepath)) {
-            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
-                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: cached data present: ", [ $cache_filepath ]);
-            }
-
-            $unlink_status = unlink($cache_filepath);
-
-        } else {
-            if (getenv('DEBUG_LOG_NGINX_CACHE')) {
-                AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: cached data not found: ", [ $cache_filepath ]);
-            }
-
-            $unlink_status = true;
-        }
-
-        if (getenv('DEBUG_LOG_NGINX_CACHE')) {
-            AppLogger::scope('main')->debug("NGINX Cache Force Cleaner: Clear status (key/status)", [$cache_key, $unlink_status]);
-        }
-
-        return $unlink_status;
-    }
-
-    /**
-     * Рекурсивно удаляет каталоги по указанному пути
-     *
-     * @param $directory
-     * @return bool
-     */
-    public static function rmdir($directory): bool
-    {
-        $files = array_diff(scandir($directory), ['.', '..']);
-        foreach ($files as $file) {
-            (is_dir("$directory/$file"))
-                ? self::rmdir("$directory/$file")
-                : unlink("$directory/$file");
-        }
-        return rmdir($directory);
-    }
-
-    /**
-     * Генерирует веб-путь к картинке (упрощенный механизм, для отрисовки фронта)
-     *
-     * @param string $type
-     * @param string $creation_date
-     * @param bool $final_slash
-     * @return string
-     */
     public static function getContentURL(string $type = "photos", $creation_date = '', bool $final_slash = true): string
     {
         $directory_separator = DIRECTORY_SEPARATOR;
@@ -266,13 +140,6 @@ class SBEngine implements SBEngineInterface
         return $path;
     }
 
-    /**
-     * Возвращает внутренний путь к контенту
-     *
-     * @param string $type
-     * @param string $creation_date
-     * @return string
-     */
     public static function getContentPath(string $type = "photos", string $creation_date = ''): string
     {
         $STORAGE_FOLDER = self::$options['PROJECT_STORAGE'];
@@ -299,11 +166,6 @@ class SBEngine implements SBEngineInterface
         return $path;
     }
 
-    /**
-     * Загружает валюты из JSON-файла
-     *
-     * @return array
-     */
     public static function loadCurrencies(): array
     {
         $MAX_CURRENCY_STRING_LENGTH = 5;
@@ -327,7 +189,7 @@ class SBEngine implements SBEngineInterface
             }
 
         } catch (Exception $e) {
-            AppLogger::scope('main')->error('[ERROR] Load Currency ', [$e->getMessage()]);
+            self::$_logger->error('[ERROR] Load Currency ', [$e->getMessage()]);
         }
 
         return $current_currency;
