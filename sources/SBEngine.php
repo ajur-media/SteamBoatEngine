@@ -170,7 +170,7 @@ class SBEngine implements SBEngineInterface
     {
         $MAX_CURRENCY_STRING_LENGTH = 5;
 
-        $file_currencies = getenv('INSTALL_PATH') . getenv('FILE_CURRENCY');
+        $file_currencies = self::$options['FILE_CURRENCY'];
 
         $current_currency = [];
 
@@ -193,6 +193,42 @@ class SBEngine implements SBEngineInterface
         }
 
         return $current_currency;
+    }
+
+
+    public static function parseUploadError(array $upload_data, $where = __METHOD__):string
+    {
+        switch ($upload_data['error']) {
+            case UPLOAD_ERR_OK: {
+                $error = '0 UPLOAD_ERR_OK: Файл успешно загружен на сервер, но что-то пошло не так.';
+                break;
+            }
+            case UPLOAD_ERR_NO_FILE: {
+                $error = 'UPLOAD_ERR_NO_FILE: Файл не был загружен по неизвестной причине';
+                break;
+            }
+            case UPLOAD_ERR_INI_SIZE: {
+                $error = 'UPLOAD_ERR_INI_SIZE: Размер принятого файла превысил upload_max_filesize в php.ini';
+                break;
+            }
+            case UPLOAD_ERR_FORM_SIZE: {
+                $error = 'UPLOAD_ERR_FORM_SIZE: Размер загружаемого файла превысил значение MAX_FILE_SIZE, указанное в HTML-форме.';
+                break;
+            }
+            case UPLOAD_ERR_PARTIAL: {
+                $error = 'UPLOAD_ERR_PARTIAL: Загружаемый файл был получен только частично. ';
+                break;
+            }
+            default: {
+                $error = '?: Что-то пошло не так.';
+            }
+        }
+
+        if (getenv('LOGGING.ADMIN_FILEUPLOAD') && self::$_logger instanceof Logger) {
+            self::$_logger->error("{$where} throw file upload error:", [ $error ]);
+        }
+
+        return $error;
     }
 
 

@@ -45,7 +45,7 @@ if (!function_exists('getEngineVersion')) {
      */
     function getEngineVersion():array
     {
-        $version_file = getenv('INSTALL_PATH') . getenv('VERSION_FILE');
+        $version_file = getenv('PATH.INSTALL') . getenv('VERSION.FILE');
         $version = [
             'date'      =>  date_format( date_create(), 'r'),
             'user'      => 'local',
@@ -105,7 +105,7 @@ if (!function_exists('convert_BB_to_HTML')) {
 
 
         if ($youtube_enabled) {
-            $text = preg_replace_callback("/\[\youtube](.*)\[\/youtube\]/i", function ($matches) use ($bbparsersizes) {
+            $text = preg_replace_callback("/\[youtube\](.*)\[\/youtube\]/i", function ($matches) use ($bbparsersizes) {
                 $matches = parse_url($matches[1]);
                 if (!preg_match("/v=([A-Za-z0-9\_\-]{11})/i", $matches["query"], $res)) {
                     if (!preg_match("/([A-Za-z0-9\_\-]{11})/i", $matches["fragment"], $res)) {
@@ -177,7 +177,7 @@ if (!function_exists('rewrite_hrefs_to_blank')) {
                         $blank = false;
                     } else {
                         // ссылка внешняя, и нам надо понять, не ведет ли она в наш же домен
-                        if (stristr($r[1], getenv('DOMAIN_FQDN'))) $blank = false;
+                        if (stristr($r[1], getenv('DOMAIN.FQDN'))) $blank = false;
                     }
                 }
             }
@@ -308,23 +308,6 @@ if (!function_exists('convertUTF16E_to_UTF8')) {
         }, $t);
     }
 
-}
-
-if (!function_exists('logSiteUsageShort')) {
-    /**
-     *
-     * @param string $scope
-     * @param string $value
-     */
-    function logSiteUsageShort(string $scope, string $value)
-    {
-        if (getenv('DEBUG_LOG_SITEUSAGE')) AppLogger::scope($scope)->notice("Usage: ", [
-            round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
-            memory_get_usage(),
-            $value,
-            $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
-        ]);
-    }
 }
 
 if (!function_exists('getSiteUsageMetrics')) {
@@ -483,7 +466,7 @@ if (!function_exists('getimagepath')) {
         $cdate = is_null($cdate) ? time() : strtotime($cdate);
 
         $path
-            = getenv('INSTALL_PATH')
+            = getenv('PATH.INSTALL')
             . "www/i/"
             . $type
             . DIRECTORY_SEPARATOR
@@ -521,35 +504,6 @@ if (!function_exists('parseUploadError')) {
      */
     function parseUploadError(array $upload_data, $where = __METHOD__):string
     {
-        switch ($upload_data['error']) {
-            case UPLOAD_ERR_OK: {
-                $error = '0 UPLOAD_ERR_OK: Файл успешно загружен на сервер, но что-то пошло не так.';
-                break;
-            }
-            case UPLOAD_ERR_NO_FILE: {
-                $error = 'UPLOAD_ERR_NO_FILE: Файл не был загружен по неизвестной причине';
-                break;
-            }
-            case UPLOAD_ERR_INI_SIZE: {
-                $error = 'UPLOAD_ERR_INI_SIZE: Размер принятого файла превысил upload_max_filesize в php.ini';
-                break;
-            }
-            case UPLOAD_ERR_FORM_SIZE: {
-                $error = 'UPLOAD_ERR_FORM_SIZE: Размер загружаемого файла превысил значение MAX_FILE_SIZE, указанное в HTML-форме.';
-                break;
-            }
-            case UPLOAD_ERR_PARTIAL: {
-                $error = 'UPLOAD_ERR_PARTIAL: Загружаемый файл был получен только частично. ';
-                break;
-            }
-            default: {
-                $error = '?: Что-то пошло не так.';
-            }
-        }
-
-        if (getenv('DEBUG_LOG_FILEUPLOAD')) {
-            AppLogger::scope('main')->error("{$where} throw file upload error:", [ $error ]);
-        }
-        return $error;
+        return \SteamBoat\SBEngine::parseUploadError($upload_data, $where);
     }
 }

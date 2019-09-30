@@ -53,4 +53,12 @@ interface SBEngineInterface
      * @return array
      */
     public static function loadCurrencies(): array;
+
+    /**
+     *
+     * @param array $upload_data
+     * @param string $where
+     * @return string
+     */
+    public static function parseUploadError(array $upload_data, $where = __METHOD__):string;
 }
