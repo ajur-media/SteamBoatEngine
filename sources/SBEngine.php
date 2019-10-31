@@ -62,12 +62,12 @@ class SBEngine implements SBEngineInterface
         self::$options['FILE_CURRENCY']
             = array_key_exists('FILE_CURRENCY', $options)
             ? $options['FILE_CURRENCY']
-            : getenv('INSTALL_PATH') . getenv('FILE_CURRENCY');
+            : getenv('FILE.CURRENCY');
 
         self::$options['FILE_WEATHER']
             = array_key_exists('FILE_WEATHER', $options)
             ? $options['FILE_WEATHER']
-            : getenv('INSTALL_PATH') . getenv('FILE_WEATHER');
+            : getenv('FILE.WEATHER');
 
         self::$storages
             = array_key_exists('STORAGE', $options)

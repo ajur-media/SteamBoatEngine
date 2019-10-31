@@ -180,7 +180,7 @@ class GDWrapper implements GDWrapperInterface
     public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
         if (!is_readable($fn_source) && self::$logger instanceof Logger) {
-            AppLogger::scope('main')->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
+            self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
 

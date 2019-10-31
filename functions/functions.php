@@ -4,6 +4,7 @@
  */
 
 use Arris\AppLogger;
+use Monolog\Logger;
 use SteamBoat\BBParser;
 
 interface SteamBoatFunctions {
@@ -82,6 +83,12 @@ if (!function_exists('convert_BB_to_HTML')) {
      */
     function convert_BB_to_HTML($text, $mode = "posts", $youtube_enabled = false):string
     {
+        if (getenv('DEBUG_LOG_BBPARSER')) {
+            $LOGGER = AppLogger::scope('bbparser');
+        } else {
+            $LOGGER = AppLogger::addNullLogger();
+        }
+
         $sizes = array(
             "posts" => array(560, 340),
             "comments" => array(320, 205),
@@ -89,20 +96,19 @@ if (!function_exists('convert_BB_to_HTML')) {
 
         $bbparsersizes = $sizes[$mode];
 
-        if (getenv('DEBUG_LOG_BBPARSER')) AppLogger::scope('main')->debug('BBParser | input data', [$text]);
+        $LOGGER->debug('BBParser | input data', [$text]);
 
         $parser = new BBParser();
         $parser->setText($text);
         $parser->parse();
         $text = $parser->getParsed();
 
-        if (getenv('DEBUG_LOG_BBPARSER')) AppLogger::scope('main')->debug('BBParser | getParsed', [$text]);
+        $LOGGER->debug('BBParser | getParsed', [$text]);
 
         $text = preg_replace("/(\-\s)/i", "&mdash; ", $text);
         $text = preg_replace("/(\s\-\s)/i", " &mdash; ", $text);
 
-        if (getenv('DEBUG_LOG_BBPARSER')) AppLogger::scope('main')->debug('BBParser | mdash replacement', [$text]);
-
+        $LOGGER->debug('BBParser | mdash replacement', [$text]);
 
         if ($youtube_enabled) {
             $text = preg_replace_callback("/\[youtube\](.*)\[\/youtube\]/i", function ($matches) use ($bbparsersizes) {
@@ -126,7 +132,7 @@ if (!function_exists('convert_BB_to_HTML')) {
             }, $text);
         } // if
 
-        if (getenv('DEBUG_LOG_BBPARSER')) AppLogger::scope('main')->debug('BBParser | after youtube check', [$text]);
+        $LOGGER->debug('BBParser | after youtube check', [$text]);
 
         $text = preg_replace_callback("/([\(]{3,})/i", function ($m) {
             return "((( ";
@@ -141,7 +147,7 @@ if (!function_exists('convert_BB_to_HTML')) {
             return "???";
         }, $text);
 
-        if (getenv('DEBUG_LOG_BBPARSER')) AppLogger::scope('main')->debug('BBParser | ()!? check', [$text]);
+        $LOGGER->debug('BBParser | ()!? check', [$text]);
 
         return $text;
     }
@@ -196,48 +202,6 @@ if (!function_exists('rewrite_hrefs_to_blank')) {
 
     }
 }
-
-if (!function_exists('ddd')) {
-    /**
-     * Dump many args and die
-     * @param mixed ...$args
-     */
-    function ddd(...$args)
-    {
-        if (php_sapi_name() !== "cli") echo '<pre>';
-        foreach (func_get_args() as $arg) {
-            var_dump($arg);
-        }
-        if (php_sapi_name() !== "cli") echo '</pre>';
-        die;
-    }
-}
-
-if (!function_exists('d')) {
-    /**
-     * @param $value
-     */
-    function d($value)
-    {
-        if (php_sapi_name() !== "cli") echo '<pre>';
-        /*foreach (func_get_args() as $arg) {
-            var_dump($value);
-        }*/
-        var_dump($value);
-        if (php_sapi_name() !== "cli") echo '</pre>';
-    }
-} // d
-
-if (!function_exists('dd')) {
-    /**
-     * @param $value
-     */
-    function dd($value)
-    {
-        d($value);
-        die;
-    }
-} // dd
 
 if (!function_exists('intdiv')) {
     /**
@@ -326,8 +290,6 @@ if (!function_exists('getSiteUsageMetrics')) {
             'memory.peak'       =>  memory_get_peak_usage(true),
             'mysql.query_count' =>  $mysql->mysqlcountquery,
             'mysql.query_time'  =>  round($mysql->mysqlquerytime, 3),
-            'time.start'        =>  $_SERVER['REQUEST_TIME'],
-            'time.end'          =>  microtime(true),
             'time.total'        =>  round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
             'site.routed'       =>  $config['ROUTED'],
             'site.url'          =>  $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
@@ -505,5 +467,37 @@ if (!function_exists('parseUploadError')) {
     function parseUploadError(array $upload_data, $where = __METHOD__):string
     {
         return \SteamBoat\SBEngine::parseUploadError($upload_data, $where);
+    }
+}
+
+if (!function_exists('d')) {
+    /**
+     * Dump
+     */
+    function d() {
+        if (php_sapi_name() !== "cli") echo '<pre>';
+        if (func_num_args()) {
+            foreach (func_get_args() as $arg) {
+                var_dump($arg);
+            }
+        }
+        if (php_sapi_name() !== "cli") echo '</pre>';
+    }
+}
+
+if (!function_exists('dd')) {
+    /**
+     * Dump and die
+     */
+    function dd() {
+        if (php_sapi_name() !== "cli") echo '<pre>';
+        if (func_num_args()) {
+            foreach (func_get_args() as $arg) {
+                var_dump($arg);
+            }
+        }
+        if (php_sapi_name() !== "cli") echo '</pre>';
+
+        die;
     }
 }
