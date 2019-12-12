@@ -23,8 +23,9 @@
   },
   "require-dev": {
     "monolog/monolog": "^1.23",
-    "karelwintersky/arris": "^1.7",
-    "foolz/sphinxql-query-builder": "^2.0"
+    "karelwintersky/arris": "^1.50",
+    "foolz/sphinxql-query-builder": "^2.0",
+    "smarty/smarty": "^3.1"
   },
   "autoload": {
     "files": [

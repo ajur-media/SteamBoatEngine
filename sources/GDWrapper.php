@@ -29,14 +29,24 @@ class GDWrapper implements GDWrapperInterface
      */
     public static $default_jpeg_quality = 100;
 
+    public static $default_webp_quality = 80;
+
     /**
      * @var Logger $logger
      */
     public static $logger = null;
 
+    /**
+     * @param $options
+     * - JPEG_COMPRESSION_QUALITY       env: STORAGE.JPEG_COMPRESSION_QUALITY       default: 100
+     * - WEBP_COMPRESSION_QUALITY       env: STORAGE.WEBP_COMPRESSION_QUALITY       default: 80
+     *
+     * @param null $logger
+     */
     public static function init($options, $logger = null)
     {
-        self::$default_jpeg_quality = setOption($options, 'JPEG_COMPRESSION_QUALITY', 'STORAGE.JPEG_COMPRESSION_QUALITY', 100);
+        self::$default_jpeg_quality = setOption($options, 'JPEG_COMPRESSION_QUALITY', 100);
+        self::$default_webp_quality = setOption($options, 'WEBP_COMPRESSION_QUALITY', 80);
 
         self::$default_jpeg_quality
             = is_integer(self::$default_jpeg_quality)
@@ -116,6 +126,9 @@ class GDWrapper implements GDWrapperInterface
         } else if ($type == IMAGETYPE_GIF) {
             $ext = 'gif';
             $im = imagecreatefromgif($fname);
+        } else if ($type == IMAGETYPE_WEBP) {
+            $ext = 'webp';
+            $im = imagecreatefromwebp($fname);
         }
 
         return [$im, $ext];
@@ -170,6 +183,8 @@ class GDWrapper implements GDWrapperInterface
             $result = imagepng($image_destination, $fn_target);
         } elseif ($extension == "gif") {
             $result = imagegif($image_destination, $fn_target);
+        } elseif ($extension == 'webp') {
+            $result = imagewebp($image_destination, $fn_target, self::$default_webp_quality);
         } else {
             $result = imagejpeg($image_destination, $fn_target, self::$default_jpeg_quality);
         }
