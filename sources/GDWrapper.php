@@ -50,7 +50,12 @@ class GDWrapper implements GDWrapperInterface
 
         self::$default_jpeg_quality
             = is_integer(self::$default_jpeg_quality)
-            ? min(self::$default_jpeg_quality, 100)
+            ? toRange(self::$default_jpeg_quality, 0, 100)
+            : 100;
+
+        self::$default_webp_quality
+            = is_integer(self::$default_webp_quality)
+            ? toRange(self::$default_webp_quality, 0, 100)
             : 100;
 
         if ($logger instanceof Logger) {

@@ -39,6 +39,8 @@ interface SteamBoatFunctions {
     function sanitizeHTMLData($body, $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<']);
 
     function normalizeSerialData(&$data, array $default_value = []);
+
+    function toRange($value, $min, $max);
 }
 
 if (!function_exists('getEngineVersion')) {
@@ -510,6 +512,20 @@ if (!function_exists('normalizeSerialData')) {
     function normalizeSerialData(&$data, array $default_value = [])
     {
         $data = empty($data) ? $default_value : @unserialize($data);
+    }
+}
+
+if (!function_exists('toRange')) {
+    /**
+     * 
+     * @param $value
+     * @param $min
+     * @param $max
+     * @return mixed
+     */
+    function toRange($value, $min, $max)
+    {
+        return max($min, min($value, $max));
     }
 }
 
