@@ -1,6 +1,8 @@
 <?php
 /**
  * Created 2019-06-07
+ *
+ * Функции, вне неймспейса
  */
 
 use Arris\AppLogger;
@@ -8,16 +10,12 @@ use Monolog\Logger;
 use SteamBoat\BBParser;
 
 interface SteamBoatFunctions {
-    const VERSION = '1.17.0';
+    const VERSION = '1.20.0';
 
     function getEngineVersion():array;
 
     function convert_BB_to_HTML($text, $mode = "posts", $youtube_enabled = false):string;
     function rewrite_hrefs_to_blank(string $text):string;
-
-    function ddd(...$args);
-    function dd($value);
-    function d($value);
 
     function intdiv($p, $q):int;
 
@@ -35,6 +33,12 @@ interface SteamBoatFunctions {
     function logReport(string $filename, string $message);  //@todo: говнокод
 
     function parseUploadError(array $upload_data, $where = __METHOD__):string;
+
+    function floatToFixedString($value, $separator = '.'):string;
+
+    function sanitizeHTMLData($body, $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<']);
+
+    function normalizeSerialData(&$data, array $default_value = []);
 }
 
 if (!function_exists('getEngineVersion')) {
@@ -262,11 +266,6 @@ if (!function_exists('convertUTF16E_to_UTF8')) {
      */
     function convertUTF16E_to_UTF8(string $t):string
     {
-        // return $t;
-        /*return preg_replace_callback('#%u([0-9A-F]{4})#s', function ($match) {
-            return iconv("UTF-16E", 'UTF-8', pack('H4', $match[1]));
-        }, $t);*/
-
         return preg_replace_callback('#%u([0-9A-F]{4})#s', function () {
             iconv("UTF-16BE", "UTF-8", pack("H4", "$1"));
         }, $t);
@@ -470,34 +469,48 @@ if (!function_exists('parseUploadError')) {
     }
 }
 
-if (!function_exists('d')) {
+if (!function_exists('floatToFixedString')) {
     /**
-     * Dump
+     * Форматирует float/double строку как число в строке с заданным разделителем десятичных знаков
+     *
+     * @param $value
+     * @param string $separator (по умолчанию '.')
+     * @return string
      */
-    function d() {
-        if (php_sapi_name() !== "cli") echo '<pre>';
-        if (func_num_args()) {
-            foreach (func_get_args() as $arg) {
-                var_dump($arg);
-            }
-        }
-        if (php_sapi_name() !== "cli") echo '</pre>';
+    function floatToFixedString($value, $separator = '.'):string
+    {
+        return str_replace(',', $separator, (string)$value);
     }
 }
 
-if (!function_exists('dd')) {
-    /**
-     * Dump and die
-     */
-    function dd() {
-        if (php_sapi_name() !== "cli") echo '<pre>';
-        if (func_num_args()) {
-            foreach (func_get_args() as $arg) {
-                var_dump($arg);
-            }
-        }
-        if (php_sapi_name() !== "cli") echo '</pre>';
+if (!function_exists('sanitizeHTMLData')) {
 
-        die;
+    /**
+     * Очищает пользовательский ввод от некорректных данных
+     *
+     * @param $body
+     * @param array $bad_values ['+', '-', '~', '(', ')', '*', '"', '>', '<']
+     * @return mixed
+     */
+    function sanitizeHTMLData($body, $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<'])
+    {
+        if (empty($bad_values)) $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<'];
+        return str_replace($bad_values, '', addslashes($body));
     }
 }
+
+if (!function_exists('normalizeSerialData')) {
+    /**
+     * Десериализует данные или возвращает значение по умолчанию
+     * в случае их "пустоты"
+     *
+     * @param $data
+     * @param $default_value
+     */
+    function normalizeSerialData(&$data, array $default_value = [])
+    {
+        $data = empty($data) ? $default_value : @unserialize($data);
+    }
+}
+
+# -eof-

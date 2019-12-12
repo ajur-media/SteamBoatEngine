@@ -1,19 +1,19 @@
 <?php
-
-// ХЕЛПЕРЫ
+// ХЕЛПЕРЫ, вне неймпейса
 
 use SteamBoat\GDWrapper;
 
-interface SteamBoatHelpers {
-
+/**
+ * Хелперы функций движка.
+ *
+ * Interface SteamBoatHelpers
+ */
+interface SteamBoatHelpers
+{
     function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
     function resizeimageaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
     function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
     function resizepictureaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
-
-    function normalizeSerialData(&$data, array $default_value = []);
-
-    function array_map_to_integer(array $input): array;
 }
 
 if (!function_exists('getfixedpicture')) {
@@ -79,33 +79,4 @@ if (!function_exists('resizepictureaspect')) {
     }
 }
 
-if (!function_exists('normalizeSerialData')) {
-    /**
-     * Десериализует данные или возвращает значение по умолчанию
-     * в случае их "пустоты"
-     *
-     * @param $data
-     * @param $default_value
-     */
-    function normalizeSerialData(&$data, array $default_value = [])
-    {
-        $data = empty($data) ? $default_value : @unserialize($data);
-    }
-}
-
-if (!function_exists('array_map_to_integer')) {
-    /**
-     * Хелпер преобразования всех элементов массива к типу integer
-     *
-     * @param array $input
-     * @return array
-     */
-    function array_map_to_integer(array $input): array
-    {
-        return array_map(function ($i) {
-            return intval($i);
-        }, $input);
-    }
-}
-
-
+# -eof-
