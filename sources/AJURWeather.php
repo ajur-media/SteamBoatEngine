@@ -2,9 +2,6 @@
 
 namespace SteamBoat;
 
-use Arris\AJURWeatherConstants;
-use Arris\AJURWeatherInterface;
-
 use Cmfcmf\OpenWeatherMap\CurrentWeather;
 use Monolog\Logger;
 
