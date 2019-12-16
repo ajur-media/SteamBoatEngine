@@ -110,7 +110,7 @@ class AJURWeather implements AJURWeatherInterface, AJURWeatherConstants
     {
         $info = [
             'id'            =>  $id,
-            'name'          =>  self::outer_regions[ $id ]['title'],
+            'name'          =>  self::outer_regions[ $id ]['geoname_ru'],
             'temperature'   =>  $weather->temperature->now->getValue()      ?? 0,
             'humidity'      =>  $weather->humidity->getFormatted()          ?? '0 %',     // форматированное, с %
             'pressure_hpa'  =>  $weather->pressure->getValue()              ?? 0,         // в гектопаскалях, сырое значение
@@ -134,7 +134,7 @@ class AJURWeather implements AJURWeatherInterface, AJURWeatherConstants
     public static function makeWeatherInfoJSON(int $id, CurrentWeather $region_weather):array {
         $info = [
             'id'            =>  $id,
-            'name'          =>  self::outer_regions[ $id ]['title'],
+            'name'          =>  self::outer_regions[ $id ]['geoname_ru'],
             'temperature'   =>  round($region_weather['main']['temp'], 0),
             'humidity'      =>  ($region_weather['main']['humidity'] ?? '0')  . '%',     // форматированное, с %
             'pressure_hpa'  =>  round($region_weather['main']['pressure_hpa'] ?? 0, 0),         // в гектопаскалях, сырое значение
