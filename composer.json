@@ -22,7 +22,7 @@
     "ext-pdo": "*",
     "ext-intl": "*",
     "ext-simplexml": "*",
-    "karelwintersky/arris": "^1.51"
+    "karelwintersky/arris": "^1.52"
   },
   "require-dev": {
     "monolog/monolog": "^1.23",
