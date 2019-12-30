@@ -1,8 +1,8 @@
 <?php
 
-
 namespace SteamBoat;
 
+use Exception;
 
 interface AJURCurrencyInterface
 {
@@ -14,8 +14,22 @@ interface AJURCurrencyInterface
         ],
     ];
 
+    /**
+     * Форматирует валюту
+     *
+     * @param $value
+     * @return mixed
+     */
     public static function formatCurrencyValue($value);
 
+    /**
+     * Загружает данные о валютах из ЦБР
+     *
+     * @param null $fetch_date
+     * @param string $source
+     * @return mixed|null
+     * @throws Exception
+     */
     public static function getCurrencyData($fetch_date = null, $source = 'CBR');
 
 }

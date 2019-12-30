@@ -73,5 +73,6 @@ class EMPortal implements EMPortalInterface
         $url = "https://emportal.ru/api/v1/appointments";
         return $this->sendCurlRequest($url, 'POST', $fields);
     }
-
 }
+
+# -eof-

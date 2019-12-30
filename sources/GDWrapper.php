@@ -535,4 +535,6 @@ class GDWrapper implements GDWrapperInterface
         return false;
     }
 
-} # -eof-
+}
+
+# -eof-

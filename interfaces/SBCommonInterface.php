@@ -48,13 +48,17 @@ interface SBCommonInterface
         504 => "HTTP/1.1 504 Gateway Time-out"
     );
 
+    const DICTIONARY_FULL = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz';
+
+    const DICTIONARY = '0123456789abcdefghijklmnopqrstuvwxyz';
+
     /**
      * Генерация рэндомных строк
      *
      * @param $length
      * @return string
      */
-    public static function getRandomString(int $length):string;
+    public static function getRandomString(\int $length):\string;
 
     /**
      * Генерируем новое имя файла на основе даты.
@@ -69,7 +73,7 @@ interface SBCommonInterface
      * @param string $prefix_format - формат даты в префиксе (Ymd)
      * @return string
      */
-    public static function getRandomFilename(int $length = 20, string $suffix = '', $prefix_format = 'Ymd'):string;
+    public static function getRandomFilename(\int $length = 20, \string $suffix = '', $prefix_format = 'Ymd'):\string;
 
     /**
      * Функция редиректа с принудительной отсылкой заголовка
@@ -79,11 +83,11 @@ interface SBCommonInterface
      * @param bool $replace_prev_headers
      * @param int $code
      */
-    public static function redirectCode(string $uri, bool $replace_prev_headers = false, int $code = 302);
+    public static function redirectCode(\string $uri, \bool $replace_prev_headers = false, \int $code = 302);
 
     /**
      * Проверяет, обратились ли к текущему скрипту через SSL
      * @return bool
      */
-    public static function is_ssl();
+    public static function is_ssl():\bool;
 }

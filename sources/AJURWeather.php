@@ -157,5 +157,6 @@ class AJURWeather implements AJURWeatherInterface, AJURWeatherConstants
         return $info;
     }
 
-
 }
+
+# -eof-

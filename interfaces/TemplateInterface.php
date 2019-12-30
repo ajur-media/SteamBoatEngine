@@ -7,8 +7,10 @@ interface TemplateInterface {
     /**
      * Инициализирует враппер (статик шаблонизатора)
      *
-     * @param $smarty   -- инстанс SMARTY
-     * @param $that     -- инстанс класса логики
+     * @param $smarty       -- инстанс SMARTY
+     * @param null $that    -- инстанс класса логики
+     * @param array $options -- опции
+     * @param null $logger -- логгер
      */
     public static function init($smarty, $that, $options, $logger);
 

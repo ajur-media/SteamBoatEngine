@@ -17,32 +17,32 @@ class Template implements TemplateInterface
     /**
      * @var Smarty
      */
-    private static $smarty;
+    public static $smarty;
 
     /**
      * @var \stdClass
      */
-    private static $steamboat_logic_instance;
+    public static $steamboat_logic_instance;
 
     /**
      * @var array
      */
-    private static $banners;
+    public static $banners;
 
     /**
      * @var array
      */
-    private static $response;
+    public static $response;
 
     /**
      * @var string
      */
-    private static $title_delimeter;
+    public static $title_delimeter;
 
     /**
      * @var string
      */
-    private static $search_mask_puid40;
+    public static $search_mask_puid40;
     /**
      * @var Logger|null
      */
@@ -67,12 +67,19 @@ class Template implements TemplateInterface
      */
     public static $ajur_adv_topic;
 
-    /** ====================== */
+    /**
+     * Биндить ли ADFOX-PUID40? [false]
+     * @var
+     */
+    private static $bind_puid40;
+
+    /* ============================================================================================================== */
 
     public static function init($smarty, $that = null, $options = [], $logger = null)
     {
         self::$title_delimeter = " " . setOption($options, 'title_delimeter', '&#8250;') . " ";
         self::$search_mask_puid40 = setOption($options, 'search_mask_puid40', '<!--#echo var="ADVTOPIC"-->');
+        self::$bind_puid40 = setOption($options, 'bind_puid40', false);
 
         self::$logger
             = $logger instanceof Logger
@@ -132,17 +139,6 @@ class Template implements TemplateInterface
             : 'HTML';
     }
 
-    /**
-     * Заменяет кавычки-лапки на html-entities
-     *
-     * @param $string
-     * @return mixed
-     */
-    private static function escapeQuotes($string)
-    {
-        return str_replace(['«', '»'], ['&laquo;', '&raquo;'], $string);
-    }
-
     public static function render()
     {
         if (self::$response['mode'] === 'JSON') {
@@ -163,7 +159,7 @@ class Template implements TemplateInterface
 
             self::$response['html'] = self::$smarty->fetch("__main_template.tpl");
 
-            // self::bindBanners();
+            self::bindBanners();
 
             return self::$response['html'];
         }
@@ -179,17 +175,26 @@ class Template implements TemplateInterface
      *
      * Вызывается в методе render() для response-type == 'HTML'
      *
-     * @todo: отключено, требует обдумывания "что же вставляем для каких типов контента"
-     *
      * Если нам нужно будет подменять эти значения для других типов отдаваемого контента - нужно
      * добавить вызов в соотв. блоки
      */
-    public static function bindBanners()
+    private static function bindBanners()
     {
-        return null;
-        self::$response['html'] = str_replace(self::$search_mask_puid40, self::$ajur_adv_topic, self::$response['html']);
+        if (self::$bind_puid40) {
+            self::$response['html'] = str_replace(self::$search_mask_puid40, self::$ajur_adv_topic, self::$response['html']);
+        }
     }
 
+    /**
+     * Заменяет кавычки-лапки на html-entities
+     *
+     * @param $string
+     * @return mixed
+     */
+    private static function escapeQuotes($string)
+    {
+        return str_replace(['«', '»'], ['&laquo;', '&raquo;'], $string);
+    }
 
 }
 

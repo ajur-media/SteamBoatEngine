@@ -17,10 +17,11 @@
     "ext-curl": "*",
     "ext-gd": "*",
     "ext-iconv": "*",
+    "ext-intl": "*",
     "ext-json": "*",
+    "ext-mbstring": "*",
     "ext-mysqli": "*",
     "ext-pdo": "*",
-    "ext-intl": "*",
     "ext-simplexml": "*",
     "karelwintersky/arris": "^1.52"
   },

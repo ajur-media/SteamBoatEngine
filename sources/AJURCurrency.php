@@ -2,9 +2,6 @@
 
 namespace SteamBoat;
 
-use Exception;
-use Throwable;
-
 /**
  * Class AJURCurrency
  *
@@ -14,12 +11,7 @@ use Throwable;
  */
 class AJURCurrency implements AJURCurrencyInterface
 {
-    /**
-     * Форматирует валюту
-     *
-     * @param $value
-     * @return mixed
-     */
+
     public static function formatCurrencyValue($value)
     {
         return money_format('%i', str_replace(',', '.', $value));
@@ -31,14 +23,6 @@ class AJURCurrency implements AJURCurrencyInterface
         }*/
     }
 
-    /**
-     * Загружает данные о валютах из ЦБР
-     *
-     * @param null $fetch_date
-     * @param string $source
-     * @return mixed|null
-     * @throws Exception
-     */
     public static function getCurrencyData($fetch_date = null, $source = 'CBR')
     {
         $fetch_date = $fetch_date ?? (new \DateTime())->format('d/m/Y');
@@ -61,5 +45,6 @@ class AJURCurrency implements AJURCurrencyInterface
         return json_decode( $json , true );
     }
 
-
 }
+
+# -eof-

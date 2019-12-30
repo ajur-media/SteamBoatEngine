@@ -14,11 +14,7 @@ class SBCommon implements SBCommonInterface
 {
     const VERSION = '1.23';
 
-    const DICTIONARY_FULL = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz';
-
-    const DICTIONARY = '0123456789abcdefghijklmnopqrstuvwxyz';
-
-    public static function getRandomString(int $length):string
+    public static function getRandomString(\int $length):\string
     {
         $salt = "";
         $dictionary = self::DICTIONARY_FULL;
@@ -31,7 +27,7 @@ class SBCommon implements SBCommonInterface
         return $salt;
     }
 
-    public static function getRandomFilename(int $length = 20, string $suffix = '', $prefix_format = 'Ymd'):string
+    public static function getRandomFilename(\int $length = 20, \string $suffix = '', $prefix_format = 'Ymd'):\string
     {
         $dictionary = self::DICTIONARY;
         $dictionary_len = strlen($dictionary);
@@ -47,7 +43,7 @@ class SBCommon implements SBCommonInterface
         return (date_format(date_create(), $prefix_format)) . '_' . $salt . $suffix;
     }
 
-    public static function redirectCode(string $uri, bool $replace_prev_headers = false, int $code = 302)
+    public static function redirectCode(\string $uri, \bool $replace_prev_headers = false, \int $code = 302)
     {
         $scheme = (self::is_ssl() ? "https://" : "http://");
         $code = array_key_exists($code, self::HTTP_CODES) ? self::HTTP_CODES[$code] : self::HTTP_CODES[302];
@@ -62,7 +58,7 @@ class SBCommon implements SBCommonInterface
         exit(0);
     }
 
-    public static function is_ssl()
+    public static function is_ssl():\bool
     {
         if (isset($_SERVER['HTTPS'])) {
             if ('on' == strtolower($_SERVER['HTTPS']))
@@ -76,4 +72,6 @@ class SBCommon implements SBCommonInterface
     }
 
 
-} # -eof-
+}
+
+# -eof-

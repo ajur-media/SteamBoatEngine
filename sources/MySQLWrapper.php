@@ -463,4 +463,6 @@ class MySQLWrapper implements MySQLWrapperInterface
         return DB::C($pdo_connector)->lastInsertId();
     }
 
-} # -eof-
+}
+
+# -eof-

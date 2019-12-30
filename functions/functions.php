@@ -529,4 +529,272 @@ if (!function_exists('toRange')) {
     }
 }
 
+/**
+ * Doctor Piter
+ */
+if (!function_exists('convert_UTF16BE_to_UTF8')){
+    function convert_UTF16BE_to_UTF8($t)
+    {
+        //return preg_replace( '#%u([0-9A-F]{1,4})#ie', "'& #'.hexdec('\\1').';'", $t );
+        // return preg_replace('#%u([0-9A-F]{4})#se', 'iconv("UTF-16BE","UTF-8",pack("H4","$1"))', $t);
+        return preg_replace_callback('#%u([0-9A-F]{4})#s', function (){
+            iconv("UTF-16BE","UTF-8", pack("H4","$1"));
+        }, $t);
+    }
+}
+
+if (!function_exists('unEscapeString')){
+    function unEscapeString($input)
+    {
+        $escape_chars = "0410 0430 0411 0431 0412 0432 0413 0433 0490 0491 0414 0434 0415 0435 0401 0451 0404 0454 0416 0436 0417 0437 0418 0438 0406 0456 0419 0439 041A 043A 041B 043B 041C 043C 041D 043D 041E 043E 041F 043F 0420 0440 0421 0441 0422 0442 0423 0443 0424 0444 0425 0445 0426 0446 0427 0447 0428 0448 0429 0449 042A 044A 042B 044B 042C 044C 042D 044D 042E 044E 042F 044F";
+        $russian_chars = "А а Б б В в Г г Ґ ґ Д д Е е Ё ё Є є Ж ж З з И и І і Й й К к Л л М м Н н О о П п Р р С с Т т У у Ф ф Х х Ц ц Ч ч Ш ш Щ щ Ъ ъ Ы ы Ь ь Э э Ю ю Я я";
+
+        $e = explode(" ", $escape_chars);
+        $r = explode(" ", $russian_chars);
+        $rus_array = explode("%u", $input);
+
+        $new_word = str_replace($e, $r, $rus_array);
+        $new_word = str_replace("%20", " ", $new_word);
+
+        return (implode("", $new_word));
+    }
+}
+
+/**
+ * stringSmartTruncate string for DP (? === jbzoo/utils -> Str::limitChars($string, $limit = 100, $append = '...') ?
+ */
+if (!function_exists('stringSmartTruncate')){
+    function stringSmartTruncate($string, $length = 80, $etc = "...", $break_words = false, $middle = false)
+    {
+        if (mb_strlen($string, "UTF-8") > $length) {
+            $length -= min($length, mb_strlen($etc, "UTF-8"));
+            if (!$break_words && !$middle) {
+                $string = preg_replace('/\s+?(\S+)?$/i', '', mb_substr($string, 0, $length + 1, "UTF-8"));
+            }
+            if (!$middle) {
+                return mb_substr($string, 0, $length, "UTF-8") . $etc;
+            }
+            return mb_substr($string, 0, $length / 2, "UTF-8") . $etc . mb_substr($string, -$length / 2, $length, "UTF-8");
+        } else {
+            return $string;
+        }
+    }
+
+}
+
+
+if (!function_exists('simpleSendEMAIL')){
+
+    /**
+     * Посылает письмо
+     *
+     * @param $to
+     * @param string $from
+     * @param string $subject
+     * @param string $message
+     * @param string $fromname
+     * @return bool
+     */
+    function simpleSendEMAIL($to, $from = "", $subject = "", $message = "", $fromname = "")
+    {
+        global $CONFIG;
+
+        if ($from == "") {
+            $from = $CONFIG['emails']['noreply'];
+        }
+
+        $headers = [];
+        if (strlen($fromname)) {
+            $headers[] = "From: =?UTF-8?B?" . base64_encode($fromname) . "?= <{$from}>";
+            $headers[] = "Reply-To: {$fromname} <{$from}>";
+        } else {
+            $headers[] = "From: {$from}";
+            $headers[] = "Reply-To: {$from}";
+        }
+        $headers[] = "MIME-Version: 1.0";
+        $headers[] = "Content-type: text/html; charset=utf-8";
+
+        $headers = implode("\r\n", $headers);
+
+        return mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $message, $headers);
+    }
+}
+
+if (!function_exists('smarty_modifier_html_substr')) {
+
+    /**
+    -------------------------------------------------------------
+     * File: modifier.html_substr.php
+     * https://stackoverflow.com/a/49094841
+     * Type: modifier
+     * Name: html_substr
+     * Version: 1.0
+     * Date: June 19th, 2003
+     * Purpose: Cut a string preserving any tag nesting and matching.
+     * Install: Drop into the plugin directory.
+     * Author: Original Javascript Code: Benjamin Lupu <hide@address.com>
+     * Translation to PHP & Smarty: Edward Dale <hide@address.com>
+     * Modification to add a string: Sebastian Kuhlmann <hide@address.com>
+     * Modification to put the added string before closing <p> or <li> tags by Peter Carter http://www.podhawk.com
+     *
+     * @param $string
+     * @param $length
+     * @param string $addstring
+     * @return bool|string
+     *
+     * Same problem: https://stackoverflow.com/questions/1193500/truncate-text-containing-html-ignoring-tags
+     */
+    function smarty_modifier_html_substr($string, $length, $addstring = "")
+    {
+
+        //some nice italics for the add-string
+        if (!empty($addstring)) $addstring = "<i> " . $addstring . "</i>";
+
+        if (strlen($string) > $length) {
+            if (!empty($string) && $length > 0) {
+                $isText = true;
+                $ret = "";
+                $i = 0;
+
+                $currentChar = "";
+                $lastSpacePosition = -1;
+                $lastChar = "";
+
+                $tagsArray = array();
+                $currentTag = "";
+                $tagLevel = 0;
+
+                $addstringAdded = false;
+
+                $noTagLength = strlen(strip_tags($string));
+
+                // Parser loop
+                for ($j = 0; $j < strlen($string); $j++) {
+
+                    $currentChar = substr($string, $j, 1);
+                    $ret .= $currentChar;
+
+                    // Lesser than event
+                    if ($currentChar == "<") $isText = false;
+
+                    // Character handler
+                    if ($isText) {
+
+                        // Memorize last space position
+                        if ($currentChar == " ") {
+                            $lastSpacePosition = $j;
+                        } else {
+                            $lastChar = $currentChar;
+                        }
+
+                        $i++;
+                    } else {
+                        $currentTag .= $currentChar;
+                    }
+
+                    // Greater than event
+                    if ($currentChar == ">") {
+                        $isText = true;
+
+                        // Opening tag handler
+                        if ((strpos($currentTag, "<") !== FALSE) &&
+                            (strpos($currentTag, "/>") === FALSE) &&
+                            (strpos($currentTag, "</") === FALSE)) {
+
+                            // Tag has attribute(s)
+                            if (strpos($currentTag, " ") !== FALSE) {
+                                $currentTag = substr($currentTag, 1, strpos($currentTag, " ") - 1);
+                            } else {
+                                // Tag doesn't have attribute(s)
+                                $currentTag = substr($currentTag, 1, -1);
+                            }
+
+                            array_push($tagsArray, $currentTag);
+
+                        } else if (strpos($currentTag, "</") !== FALSE) {
+                            array_pop($tagsArray);
+                        }
+
+                        $currentTag = "";
+                    }
+
+                    if ($i >= $length) {
+                        break;
+                    }
+                }
+
+                // Cut HTML string at last space position
+                if ($length < $noTagLength) {
+                    if ($lastSpacePosition != -1) {
+                        $ret = substr($string, 0, $lastSpacePosition);
+                    } else {
+                        $ret = substr($string, $j);
+                    }
+                }
+
+                // Close broken XHTML elements
+                while (sizeof($tagsArray) != 0) {
+                    $aTag = array_pop($tagsArray);
+                    // if a <p> or <li> tag needs to be closed, put the add-string in first
+                    if (($aTag == "p" || $aTag == "li") && strlen($string) > $length) {
+                        $ret .= $addstring;
+                        $addstringAdded = true;
+                    }
+                    $ret .= "</" . $aTag . ">\n";
+                }
+
+            } else {
+                $ret = "";
+            }
+
+            // if we have not added the add-string already
+            if (strlen($string) > $length && $addstringAdded == false) {
+                return ($ret . $addstring);
+            } else {
+                return ($ret);
+            }
+        } else {
+            return ($string);
+        }
+    }
+
+}
+
+if (!function_exists('close_tags')){
+
+    /**
+     * Вызывается в шаблонах
+     * @param $content
+     * @return string
+     */
+    function close_tags($content)
+    {
+        preg_match_all('#<(?!meta|em|strong|img|br|hr|input\b)\b([a-z]+)(?: .*)?(?<![/|/ ])>#iU', $content, $result);
+        $openedtags = $result[1];
+        preg_match_all('#</([a-z]+)>#iU', $content, $result);
+        $closedtags = $result[1];
+        $len_opened = count($openedtags);
+        if (count($closedtags) == $len_opened) {
+            return $content;
+        }
+        $openedtags = array_reverse($openedtags);
+        for ($i = 0; $i < $len_opened; $i++) {
+            if (!in_array($openedtags[$i], $closedtags)) {
+                $content .= '</' . $openedtags[$i] . '>';
+            } else {
+                unset($closedtags[array_search($openedtags[$i], $closedtags)]);
+            }
+        }
+        return $content;
+    }
+}
+
+
 # -eof-
+
+if (!function_exists('_')){
+    function _()
+    {
+
+    }
+}

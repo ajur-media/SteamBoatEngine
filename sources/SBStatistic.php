@@ -28,6 +28,8 @@ class SBStatistic implements SBStatisticInterface
      */
     private static $logger;
 
+    private static $is_engine_disabled = false;
+
     public static function init($allowed_item_types = [], $logger = null)
     {
         if (!empty($allowed_item_types)) {
@@ -37,6 +39,8 @@ class SBStatistic implements SBStatisticInterface
         if ($logger instanceof LoggerInterface) {
             self::$logger = $logger;
         }
+
+        self::$is_engine_disabled = getenv('DEBUG.DISABLE_DRCALCULUS_STATS_ENGINE');
     }
 
     public static function prepareDataForMorrisStatview(array $data):array
@@ -59,10 +63,8 @@ class SBStatistic implements SBStatisticInterface
     public static function invoke()
     {
         try {
-            /*
-            if (getenv('DISABLE_DRCALCULUS_STATS_ENGINE'))
-                throw new \Exception('Dr. Calculus stats engine not ready', 999);
-            */
+            if (self::$is_engine_disabled)
+                throw new \Exception('Dr.Calculus stats engine not ready', 999);
 
             $id = intval($_REQUEST['id']);
 
@@ -269,3 +271,5 @@ ORDER BY `event_date` DESC
 
 
 }
+
+# -eof-
