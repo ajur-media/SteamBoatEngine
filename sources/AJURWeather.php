@@ -108,7 +108,7 @@ class AJURWeather implements AJURWeatherInterface, AJURWeatherConstants
 
     public static function makeWeatherInfo($id, CurrentWeather $weather):array
     {
-        $info = [
+        return [
             'id'            =>  $id,
             'name'          =>  self::outer_regions[ $id ]['geoname_ru'],
             'temperature'   =>  $weather->temperature->now->getValue()      ?? 0,
@@ -128,7 +128,6 @@ class AJURWeather implements AJURWeatherInterface, AJURWeatherConstants
                 ? self::icons_conversion[ $weather->weather->icon ]
                 : '44d',
         ];
-        return $info;
     }
 
     public static function makeWeatherInfoJSON(int $id, CurrentWeather $region_weather):array {

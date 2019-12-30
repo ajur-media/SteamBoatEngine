@@ -306,9 +306,12 @@ if (!function_exists('logSiteUsage')) {
      * @param \Monolog\Logger $logger
      * @param array $metrics
      * @param bool $is_print
+     * @return bool
      */
-    function logSiteUsage(\Monolog\Logger $logger, array $metrics, bool $is_print)
+    function logSiteUsage(\Monolog\Logger $logger, array $metrics, bool $is_print = false)
     {
+        if (empty($metrics)) return false;
+
         if ($is_print) {
             $site_usage_stats = sprintf(
                 '<!-- Consumed memory: %u bytes, SQL query count: %u, SQL time %g sec, Total time: %g sec. -->',
@@ -325,6 +328,7 @@ if (!function_exists('logSiteUsage')) {
             unset($metrics['time.end']);
             $logger->notice('Metrics:', $metrics);
         }
+        return true;
     }
 }
 
@@ -656,13 +660,10 @@ if (!function_exists('smarty_modifier_html_substr')) {
                 $ret = "";
                 $i = 0;
 
-                $currentChar = "";
                 $lastSpacePosition = -1;
-                $lastChar = "";
 
                 $tagsArray = array();
                 $currentTag = "";
-                $tagLevel = 0;
 
                 $addstringAdded = false;
 
