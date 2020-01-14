@@ -75,7 +75,7 @@ class MySQLWrapper implements MySQLWrapperInterface
             $this->_logger = AppLogger::addNullLogger();
         }
 
-        $this->options[ 'DB_SLOW_QUERY_THRESHOLD' ] = getenv('DB.SLOW_QUERY_THRESHOLD');
+        $this->options['DB_SLOW_QUERY_THRESHOLD'] = getenv('DB.SLOW_QUERY_THRESHOLD') ?: 1;
 
         if (empty($config)) {
             $this->_logger->emergency('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB Config is empty', [var_export($config, true)]);
@@ -84,7 +84,7 @@ class MySQLWrapper implements MySQLWrapperInterface
         $this->db_config = $config;
 
         $this->hostname = $this->db_config['hostname'];
-        $this->port = $this->db_config['port'];
+        $this->port     = $this->db_config['port'];
         $this->username = $this->db_config['username'];
         $this->password = $this->db_config['password'];
         $this->database = $this->db_config['database'];

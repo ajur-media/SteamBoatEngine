@@ -102,6 +102,7 @@ class GDWrapper implements GDWrapperInterface
             imagedestroy($image_source);
             return true;
         } else {
+            self::$logger->error('Not image: ', [ $fn_source ]);
             echo "not image {$fn_source}";
             return false;
         }
