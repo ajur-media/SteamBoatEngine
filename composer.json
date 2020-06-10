@@ -24,7 +24,7 @@
     "ext-pdo": "*",
     "ext-simplexml": "*",
     "karelwintersky/arris": "^1.52",
-    "cmfcmf/openweathermap-php-api": "^3.2"
+    "cmfcmf/openweathermap-php-api": "^2.4"
   },
   "require-dev": {
     "monolog/monolog": "^1.23",
