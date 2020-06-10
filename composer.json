@@ -23,7 +23,8 @@
     "ext-mysqli": "*",
     "ext-pdo": "*",
     "ext-simplexml": "*",
-    "karelwintersky/arris": "^1.52"
+    "karelwintersky/arris": "^1.52",
+    "cmfcmf/openweathermap-php-api": "^3.2"
   },
   "require-dev": {
     "monolog/monolog": "^1.23",

@@ -4,10 +4,8 @@
 namespace SteamBoat;
 
 use Arris\DB;
-use Exception;
 use Monolog\Logger;
 use mysqli_result;
-use Arris\AppLogger;
 
 /**
  * Class MySQLWrapper
@@ -69,11 +67,9 @@ class MySQLWrapper implements MySQLWrapperInterface
 
     public function __construct($config, $logger = null)
     {
-        if ($logger instanceof Logger) {
-            $this->_logger = $logger;
-        } else {
-            $this->_logger = AppLogger::addNullLogger();
-        }
+        $this->_logger = $logger instanceof Logger
+            ? $logger
+            : (new Logger('null'))->pushHandler(new \Monolog\Handler\NullHandler());
 
         $this->options['DB_SLOW_QUERY_THRESHOLD'] = getenv('DB.SLOW_QUERY_THRESHOLD') ?: 1;
 
@@ -225,18 +221,32 @@ class MySQLWrapper implements MySQLWrapperInterface
         }
         unset($hash['perpage']);
 
+        // page, limit, offset
         if (isset($hash['page']) and is_numeric($hash['page']) and isset($hash['limit'])) {
-            $from = (ceil($hash['page']) - 1) * $hash['limit'];
-            $limit = "LIMIT " . $from . ", " . $hash['limit'];
+            if (isset($hash['offset'])) {
+                $limit = "LIMIT {$hash['limit']} OFFSET {$hash['offset']}";
+            } else {
+                $from = (ceil($hash['page']) - 1) * $hash['limit'];
+                $limit = "LIMIT " . $from . ", " . $hash['limit'];
+            }
         }
 
         if (isset($hash['limit']) and is_numeric($hash['limit']) and !isset($hash['page'])) {
-            $limit = "LIMIT " . ceil($hash['limit']);
+            $_lim = ceil($hash['limit']);
+            if (isset($hash['offset'])) {
+                $limit = "LIMIT {$_lim} OFFSET {$hash['offset']}";
+            } else {
+                $limit = "LIMIT {$_lim}";
+            }
         }
 
         // все записи
         if (isset($hash['limit']) and $hash['limit'] == "all" and !isset($hash['page'])) {
             $limit = "";
+        }
+
+        if (isset($hash['offset'])) {
+            unset($hash['offset']);
         }
 
         $order = "";
