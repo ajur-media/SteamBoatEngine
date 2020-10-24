@@ -4,6 +4,8 @@ namespace SteamBoat;
 
 use Exception;
 use mysqli_result;
+use PDO;
+use Psr\Log\LoggerInterface;
 
 interface MySQLWrapperInterface
 {
@@ -12,8 +14,9 @@ interface MySQLWrapperInterface
      *
      * @param $config
      * @param $logger
+     * @param PDO $pdo_connector
      */
-    public function __construct($config, $logger = null);
+    public function __construct($config, PDO $pdo_connector, LoggerInterface $logger = null);
 
     /**
      * Коннект к базе
@@ -86,18 +89,17 @@ interface MySQLWrapperInterface
      * @param bool $needpages
      * @return string
      */
-    public function create($fields, $table, $hash = null, $joins = null, $needpages = true);
+    public function create($fields, $table, $hash = null, $joins = null, $needpages = true):string;
 
     /**
      * Выполнить запрос через PDO, коннектор по умолчанию NULL
      *
      * @param $query
      * @param $dataset
-     * @param $pdo_connector  - default null
      * @return bool
      * @throws Exception
      */
-    public function pdo_query($query, $dataset, $pdo_connector = NULL);
+    public function pdo_query(string $query, array $dataset);
 
     /**
      * Last insert id сделанный через PDO-коннекшен
@@ -106,5 +108,19 @@ interface MySQLWrapperInterface
      * @return string
      * @throws Exception
      */
-    public function pdo_last_insert_id($pdo_connector = null);
+    public function pdo_last_insert_id();
+
+    /**
+     * Возвращает количество сделанных запросов
+     *
+     * @return int
+     */
+    public function getQueryCount();
+
+    /**
+     * Возвращает время, затраченное на запросы
+     *
+     * @return float
+     */
+    public function getQueryTime();
 }

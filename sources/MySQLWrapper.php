@@ -1,11 +1,13 @@
 <?php
 
-
 namespace SteamBoat;
 
-use Arris\DB;
-use Monolog\Logger;
 use mysqli_result;
+
+use PDO;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
+
 
 /**
  * Class MySQLWrapper
@@ -35,14 +37,14 @@ class MySQLWrapper implements MySQLWrapperInterface
     public $charset;
     public $charset_collate;
 
-    // счетсчик кол-ва запросов в базу
+    // счетчик кол-ва запросов в базу
     public $mysqlcountquery = 0;
 
     // счетчик общего времени запросов в базу
     public $mysqlquerytime = 0;
 
     public $result;
-
+    
     public $db;
 
     /**
@@ -61,17 +63,24 @@ class MySQLWrapper implements MySQLWrapperInterface
     public $request_error = false;
 
     /**
-     * @var
+     * @var PDO
+     */
+    public $pdo;
+    
+    /**
+     * @var LoggerInterface|NullLogger
      */
     private $_logger = null;
 
-    public function __construct($config, $logger = null)
+    public function __construct($config, PDO $pdo_connector, LoggerInterface $logger = null)
     {
-        $this->_logger = $logger instanceof Logger
+        $this->_logger = $logger instanceof LoggerInterface
             ? $logger
-            : (new Logger('null'))->pushHandler(new \Monolog\Handler\NullHandler());
+            : new NullLogger();
 
-        $this->options['DB_SLOW_QUERY_THRESHOLD'] = getenv('DB.SLOW_QUERY_THRESHOLD') ?: 1;
+        $this->pdo = $pdo_connector;
+
+        $this->options['DB.SLOW_QUERY.THRESHOLD'] = getenv('DB.SLOW_QUERY_THRESHOLD') ?: 1;
 
         if (empty($config)) {
             $this->_logger->emergency('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB Config is empty', [var_export($config, true)]);
@@ -189,7 +198,7 @@ class MySQLWrapper implements MySQLWrapperInterface
         return mysqli_insert_id($this->db);
     }
 
-    public function create($fields, $table, $hash = null, $joins = null, $needpages = true)
+    public function create($fields, $table, $hash = null, $joins = null, $needpages = true):string
     {
         $where = "";
         $limit = "";
@@ -433,11 +442,11 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $r[$row];
     }
 
-    public function pdo_query($query, $dataset, $pdo_connector = NULL)
+    public function pdo_query(string $query, array $dataset)
     {
         $time_start = microtime(true);
 
-        $sth = DB::C($pdo_connector)->prepare($query);
+        $sth = $this->pdo->prepare($query);
 
         $result = $sth->execute($dataset);
 
@@ -447,12 +456,12 @@ class MySQLWrapper implements MySQLWrapperInterface
             $this->request_error = true;
             $this->_logger->error("PDO::execute() error: ", [
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
-                DB::C($pdo_connector)->errorInfo(),
+                $this->pdo->errorInfo(),
                 $query
             ]);
         }
 
-        if (($time_consumed > $this->options['DB_SLOW_QUERY_THRESHOLD'])) {
+        if (($time_consumed > $this->options['DB.SLOW_QUERY.THRESHOLD'])) {
             $this->_logger->info("PDO::execute() slow: ", [
                 $time_consumed,
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
@@ -468,9 +477,19 @@ class MySQLWrapper implements MySQLWrapperInterface
         return $result;
     }
 
-    public function pdo_last_insert_id($pdo_connector = null)
+    public function pdo_last_insert_id()
     {
-        return DB::C($pdo_connector)->lastInsertId();
+        return $this->pdo->lastInsertId();
+    }
+
+    public function getQueryCount()
+    {
+        return $this->mysqlcountquery;
+    }
+
+    public function getQueryTime()
+    {
+        return $this->mysqlquerytime;
     }
 
 }

@@ -1,19 +1,17 @@
 <?php
 
-
 namespace SteamBoat;
 
-
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 
 interface GDWrapperInterface
 {
     /**
      *
      * @param $options
-     * @param Logger $logger
+     * @param LoggerInterface $logger
      */
-    public static function init($options, $logger = null);
+    public static function init($options = [], LoggerInterface $logger = null);
 
     /**
      * вписывает изображение в указанные размеры

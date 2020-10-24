@@ -2,17 +2,19 @@
 
 namespace SteamBoat;
 
-interface TemplateInterface {
+use Psr\Log\LoggerInterface;
 
+interface TemplateInterface {
+    
     /**
      * Инициализирует враппер (статик шаблонизатора)
      *
-     * @param $smarty       -- инстанс SMARTY
-     * @param null $that    -- инстанс класса логики
+     * @param $smarty -- инстанс SMARTY
+     * @param null $that -- инстанс класса логики
      * @param array $options -- опции
-     * @param null $logger -- логгер
+     * @param LoggerInterface $logger -- логгер
      */
-    public static function init($smarty, $that, $options, $logger);
+    public static function init($smarty, $that = null, $options = [], LoggerInterface $logger = null);
 
     /**
      * SMARTY Assign value

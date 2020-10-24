@@ -13,7 +13,7 @@
     "optimize-autoloader": true
   },
   "require": {
-    "php": ">=7",
+    "php": ">=7.2",
     "ext-curl": "*",
     "ext-gd": "*",
     "ext-iconv": "*",
@@ -23,18 +23,14 @@
     "ext-mysqli": "*",
     "ext-pdo": "*",
     "ext-simplexml": "*",
-    "karelwintersky/arris": "^1.52",
-    "cmfcmf/openweathermap-php-api": "^2.4"
+    "psr/log": "^1.1"
   },
   "require-dev": {
-    "monolog/monolog": "^1.23",
-    "foolz/sphinxql-query-builder": "^2.0",
     "smarty/smarty": "^3.1"
   },
   "autoload": {
     "files": [
-      "functions/functions.php",
-      "functions/helpers.php"
+      "functions/functions.php"
     ],
     "psr-4": {
       "SteamBoat\\"           : ["sources/", "interfaces/"]

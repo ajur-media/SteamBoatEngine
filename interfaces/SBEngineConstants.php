@@ -1,10 +1,8 @@
 <?php
 
-
 namespace SteamBoat;
 
-
-interface SBCommonInterface
+interface SBEngineConstants
 {
     const HTTP_CODES = array(
         100 => "HTTP/1.1 100 Continue",
@@ -51,43 +49,4 @@ interface SBCommonInterface
     const DICTIONARY_FULL = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890abcdefghijklmnopqrstuvwxyz';
 
     const DICTIONARY = '0123456789abcdefghijklmnopqrstuvwxyz';
-
-    /**
-     * Генерация рэндомных строк
-     *
-     * @param $length
-     * @return string
-     */
-    public static function getRandomString(int $length):string;
-
-    /**
-     * Генерируем новое имя файла на основе даты.
-     * Формат: ПРЕФИКС + СОЛЬ + СУФФИКС
-     *
-     * ПРЕФИКС делается на основе текущей (!) даты по переданной маске. Если маска пустая - префикс пуст
-     * СОЛЬ - случайная строка [a-z0-9]
-     * СУФФИКС - строка, если не пуста - заменяется на "{суффикс}"
-     *
-     * @param int $length - длина соли
-     * @param string $suffix - суффикс имени файла.
-     * @param string $prefix_format - формат даты в префиксе (Ymd)
-     * @return string
-     */
-    public static function getRandomFilename(int $length = 20, string $suffix = '', $prefix_format = 'Ymd'):string;
-
-    /**
-     * Функция редиректа с принудительной отсылкой заголовка
-     * see also https://gist.github.com/phoenixg/5326222
-     *
-     * @param $uri
-     * @param bool $replace_prev_headers
-     * @param int $code
-     */
-    public static function redirectCode(string $uri, bool $replace_prev_headers = false, int $code = 302);
-
-    /**
-     * Проверяет, обратились ли к текущему скрипту через SSL
-     * @return bool
-     */
-    public static function is_ssl():bool;
 }

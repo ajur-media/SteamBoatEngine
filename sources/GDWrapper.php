@@ -8,9 +8,8 @@
 
 namespace SteamBoat;
 
-use Arris\AppLogger;
-use Monolog\Logger;
-use function Arris\setOption as setOption;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Class GDWrapper
@@ -32,21 +31,21 @@ class GDWrapper implements GDWrapperInterface
     public static $default_webp_quality = 80;
 
     /**
-     * @var Logger $logger
+     * @var LoggerInterface $logger
      */
     public static $logger = null;
-
+    
     /**
-     * @param $options
+     * @param array $options
      * - JPEG_COMPRESSION_QUALITY       env: STORAGE.JPEG_COMPRESSION_QUALITY       default: 100
      * - WEBP_COMPRESSION_QUALITY       env: STORAGE.WEBP_COMPRESSION_QUALITY       default: 80
      *
-     * @param null $logger
+     * @param LoggerInterface $logger
      */
-    public static function init($options, $logger = null)
+    public static function init($options = [], LoggerInterface $logger = null)
     {
-        self::$default_jpeg_quality = setOption($options, 'JPEG_COMPRESSION_QUALITY', 100);
-        self::$default_webp_quality = setOption($options, 'WEBP_COMPRESSION_QUALITY', 80);
+        self::$default_jpeg_quality = $options['JPEG_COMPRESSION_QUALITY'] ?? 100;
+        self::$default_webp_quality = $options['WEBP_COMPRESSION_QUALITY'] ?? 80;
 
         self::$default_jpeg_quality
             = is_integer(self::$default_jpeg_quality)
@@ -56,18 +55,18 @@ class GDWrapper implements GDWrapperInterface
         self::$default_webp_quality
             = is_integer(self::$default_webp_quality)
             ? toRange(self::$default_webp_quality, 0, 100)
-            : 100;
-
-        if ($logger instanceof Logger) {
-            self::$logger = $logger;
-        } else {
-            self::$logger = AppLogger::addNullLogger();
-        }
+            : 80;
+    
+        self::$logger
+            = $logger instanceof LoggerInterface
+            ? $logger
+            : new NullLogger();
+    
     }
 
     public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+        if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
@@ -120,9 +119,6 @@ class GDWrapper implements GDWrapperInterface
     {
         if ($type == IMAGETYPE_BMP) {
             return [null, null];
-        } else if ($type == IMAGETYPE_PSD) {
-            $ext = 'psd';
-            $im = imagecreatefrompsd($fname);
         } else if ($type == IMAGETYPE_PNG) {
             $ext = 'png';
             $im = imagecreatefrompng($fname);
@@ -200,7 +196,7 @@ class GDWrapper implements GDWrapperInterface
 
     public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+        if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
@@ -246,7 +242,7 @@ class GDWrapper implements GDWrapperInterface
 
     public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+        if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
@@ -285,7 +281,7 @@ class GDWrapper implements GDWrapperInterface
 
     public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
     {
-        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+        if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
@@ -439,7 +435,7 @@ class GDWrapper implements GDWrapperInterface
 
     public static function rotate2(string $fn_source, string $dist = ""):bool
     {
-        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+        if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }
@@ -467,7 +463,7 @@ class GDWrapper implements GDWrapperInterface
 
     public static function rotate(string $fn_source, string $dist = ""):bool
     {
-        if (!is_readable($fn_source) && self::$logger instanceof Logger) {
+        if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
             return false;
         }

@@ -2,15 +2,14 @@
 
 namespace SteamBoat;
 
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Smarty;
-use function Arris\setOption;
 
 /**
  * Class Template
  * @package SteamBoat
  *
- * @todo: move to AstolfoEngine
  */
 class Template implements TemplateInterface
 {
@@ -75,17 +74,17 @@ class Template implements TemplateInterface
 
     /* ============================================================================================================== */
 
-    public static function init($smarty, $that = null, $options = [], $logger = null)
+    public static function init($smarty, $that = null, $options = [], LoggerInterface $logger = null)
     {
-        self::$title_delimeter = " " . setOption($options, 'title_delimeter', '&#8250;') . " ";
-        self::$search_mask_puid40 = setOption($options, 'search_mask_puid40', '<!--#echo var="ADVTOPIC"-->');
-        self::$bind_puid40 = setOption($options, 'bind_puid40', false);
+        self::$title_delimeter = " " . SBEngine::setOption($options, 'title_delimeter', '&#8250;') . " ";
+        self::$search_mask_puid40 = SBEngine::setOption($options, 'search_mask_puid40', '<!--#echo var="ADVTOPIC"-->');
+        self::$bind_puid40 = SBEngine::setOption($options, 'bind_puid40', false);
 
         self::$logger
-            = $logger instanceof Logger
+            = $logger instanceof LoggerInterface
             ? $logger
-            : (new Logger('null'))->pushHandler(new \Monolog\Handler\NullHandler());
-
+            : new NullLogger();
+    
         self::$smarty = $smarty;
         self::$steamboat_logic_instance = $that;
 

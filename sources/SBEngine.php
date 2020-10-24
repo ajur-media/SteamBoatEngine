@@ -2,13 +2,8 @@
 
 namespace SteamBoat;
 
-use Monolog\Logger;
-use Arris\AppLogger;
-use Exception;
-
-use function array_diff;
-use function is_dir;
-use function scandir;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Class SBEngine
@@ -19,29 +14,27 @@ use function scandir;
  * - error - ошибка загрузки данных
  *
  */
-class SBEngine implements SBEngineInterface
+class SBEngine implements SBEngineInterface, SBEngineConstants
 {
-    const VERSION = '1.22';
+    const VERSION = '1.30.0';
 
     public static $options = [
         'PROJECT_PUBLIC'    =>  '',
         'PROJECT_STORAGE'   =>  '',
         'PROJECT_CLASSES'   =>  '',
-        //
-        'FILE_CURRENCY'     =>  '',
-        'FILE_WEATHER'      =>  '',
-        //
     ];
 
     // алиасы к папкам хранилища
-    public static $storages = [];
+    public static $storages = [
+
+    ];
 
     /**
-     * @var Logger $_logger
+     * @var LoggerInterface $_logger
      */
     public static $_logger;
 
-    public static function init(array $options, $logger = null)
+    public static function init(array $options, LoggerInterface $logger = null)
     {
         if (!array_key_exists('PROJECT_PUBLIC', $options)) {
             die('SBEngine::init() option [PROJECT_PUBLIC] not present!');
@@ -59,25 +52,20 @@ class SBEngine implements SBEngineInterface
             ? $options['PROJECT_PUBLIC'] . $options['PROJECT_CLASSES']
             : $options['PROJECT_PUBLIC'] . "engine.legacy/";
 
-        self::$options['FILE_CURRENCY']
-            = array_key_exists('FILE_CURRENCY', $options)
-            ? $options['FILE_CURRENCY']
-            : getenv('FILE.CURRENCY');
-
-        self::$options['FILE_WEATHER']
-            = array_key_exists('FILE_WEATHER', $options)
-            ? $options['FILE_WEATHER']
-            : getenv('FILE.WEATHER');
-
         self::$storages
             = array_key_exists('STORAGE', $options)
             ? $options['STORAGE']
             : [];
+        
+        self::$options['LOG_SITE_USAGE']
+            = array_key_exists('LOG_SITE_USAGE', $options)
+            ? $options['LOG_SITE_USAGE']
+            : false;
 
         self::$_logger
-            = $logger instanceof Logger
+            = $logger instanceof LoggerInterface
             ? $logger
-            : AppLogger::addNullLogger();
+            : new NullLogger();
     }
 
     public static function engine_prepare_classes(array $folders): array
@@ -166,36 +154,6 @@ class SBEngine implements SBEngineInterface
         return $path;
     }
 
-    public static function loadCurrencies(): array
-    {
-        $MAX_CURRENCY_STRING_LENGTH = 5;
-
-        $file_currencies = self::$options['FILE_CURRENCY'];
-
-        $current_currency = [];
-
-        try {
-            $file_content = file_get_contents($file_currencies);
-            if ($file_content === FALSE) throw new Exception("Currency file `{$file_currencies}` not found", 1);
-
-            $file_content = json_decode($file_content, true);
-            if (($file_content === NULL) || !is_array($file_content)) throw new Exception("Currency data can't be parsed", 2);
-
-            if (!array_key_exists('data', $file_content)) throw new Exception("Currency file does not contain DATA section", 3);
-
-            // добиваем валюту до $MAX_CURRENCY_STRING_LENGTH нулями (то есть 55.4 (4 десятых) добивается до 55.40 (40 копеек)
-            foreach ($file_content['data'] as $currency_code => $currency_data) {
-                $current_currency[$currency_code] = str_pad($currency_data, $MAX_CURRENCY_STRING_LENGTH, '0');
-            }
-
-        } catch (Exception $e) {
-            self::$_logger->error('[ERROR] Load Currency ', [$e->getMessage()]);
-        }
-
-        return $current_currency;
-    }
-
-
     public static function parseUploadError(array $upload_data, $where = __METHOD__):string
     {
         switch ($upload_data['error']) {
@@ -224,14 +182,173 @@ class SBEngine implements SBEngineInterface
             }
         }
 
-        if (getenv('LOGGING.ADMIN_FILEUPLOAD') && self::$_logger instanceof Logger) {
+        if (getenv('LOGGING.ADMIN_FILEUPLOAD')) {
             self::$_logger->error("{$where} throw file upload error:", [ $error ]);
         }
 
         return $error;
     }
 
+    public static function is_ssl():bool
+    {
+        if (isset($_SERVER['HTTPS'])) {
+            if ('on' == strtolower($_SERVER['HTTPS']))
+                return true;
+            if ('1' == $_SERVER['HTTPS'])
+                return true;
+        } elseif (isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT'])) {
+            return true;
+        }
+        return false;
+    }
 
+    public static function getRandomFilename(int $length = 20, string $suffix = '', $prefix_format = 'Ymd'):string
+    {
+        $dictionary = self::DICTIONARY;
+        $dictionary_len = strlen($dictionary);
+
+        // если суффикс не NULL, то _суффикс иначе пустая строка
+        $suffix = !empty($suffix) ? '_' . $suffix : '';
+
+        $salt = '';
+        for ($i = 0; $i < $length; $i++) {
+            $salt .= $dictionary[mt_rand(0, $dictionary_len - 1)];
+        }
+
+        return (date_format(date_create(), $prefix_format)) . '_' . $salt . $suffix;
+    }
+
+    public static function getRandomString(int $length):string
+    {
+        $salt = "";
+        $dictionary = SBEngineConstants::DICTIONARY_FULL;
+        $dictionary_len = strlen($dictionary);
+
+        for ($i = 0; $i < $length; $i++) {
+            $salt .= $dictionary[ mt_rand(0, $dictionary_len - 1) ];
+        }
+
+        return $salt;
+    }
+
+    public static function getEngineVersion():array
+    {
+        $version_file = getenv('VERSION.FILE');
+        $version = [
+            'date'      =>  date_format( date_create(), 'r'),
+            'user'      => 'local',
+            'summary'   => 'latest'
+        ];
+
+        if (getenv('VERSION')) {
+            $version['summary'] = getenv('VERSION');
+        } elseif (is_readable($version_file)) {
+            $array = file($version_file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+            $version = [
+                'date'      => $array[1] ?? time(),
+                'user'      => 'local',
+                'summary'   => $array[0] ?? ''
+            ];
+        }
+
+        return $version;
+    }
+
+    public static function getSiteUsageMetrics(MySQLWrapper $mysql, array $config): array
+    {
+        return [
+            'memory.usage'      =>  memory_get_usage(true),
+            'memory.peak'       =>  memory_get_peak_usage(true),
+            'mysql.query_count' =>  $mysql->getQueryCount(),
+            'mysql.query_time'  =>  round($mysql->getQueryTime(), 3),
+            'time.total'        =>  round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
+            'site.routed'       =>  $config['ROUTED'] ?? '/',
+            'site.url'          =>  $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
+        ];
+    }
+
+    public static function logSiteUsage(LoggerInterface $logger, array $metrics, bool $is_print = false)
+    {
+        if (empty($metrics)) return false;
+
+        if ($is_print) {
+            $site_usage_stats = sprintf(
+                '<!-- Consumed memory: %u bytes, SQL query count: %u, SQL time %g sec, Total time: %g sec. -->',
+                $metrics['memory.usage'],
+                $metrics['mysql.query_count'],
+                $metrics['mysql.query_time'],
+                $metrics['time.total']
+            );
+            echo $site_usage_stats;
+        }
+
+        if (self::$options['LOG_SITE_USAGE']) {
+            unset($metrics['time.start']);
+            unset($metrics['time.end']);
+            $logger->notice('Metrics:', $metrics);
+        }
+        return true;
+    }
+
+    public static function sanitizeHTMLData($body, $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<'])
+    {
+        if (empty($bad_values)) $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<'];
+        return str_replace($bad_values, '', addslashes($body));
+    }
+
+    public static function normalizeSerialData(&$data, array $default_value = [])
+    {
+        $data = empty($data) ? $default_value : @unserialize($data);
+    }
+
+    public static function simpleSendEMAIL($to, $from = "", $subject = "", $message = "", $fromname = "")
+    {
+        global $CONFIG;
+
+        if ($from == "") {
+            $from = $CONFIG['emails']['noreply'];
+        }
+
+        $headers = [];
+        if (strlen($fromname)) {
+            $headers[] = "From: =?UTF-8?B?" . base64_encode($fromname) . "?= <{$from}>";
+            $headers[] = "Reply-To: {$fromname} <{$from}>";
+        } else {
+            $headers[] = "From: {$from}";
+            $headers[] = "Reply-To: {$from}";
+        }
+        $headers[] = "MIME-Version: 1.0";
+        $headers[] = "Content-type: text/html; charset=utf-8";
+
+        $headers = implode("\r\n", $headers);
+
+        return mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $message, $headers);
+    }
+
+    public static function unEscapeString($input)
+    {
+        $escape_chars = "0410 0430 0411 0431 0412 0432 0413 0433 0490 0491 0414 0434 0415 0435 0401 0451 0404 0454 0416 0436 0417 0437 0418 0438 0406 0456 0419 0439 041A 043A 041B 043B 041C 043C 041D 043D 041E 043E 041F 043F 0420 0440 0421 0441 0422 0442 0423 0443 0424 0444 0425 0445 0426 0446 0427 0447 0428 0448 0429 0449 042A 044A 042B 044B 042C 044C 042D 044D 042E 044E 042F 044F";
+        $russian_chars = "А а Б б В в Г г Ґ ґ Д д Е е Ё ё Є є Ж ж З з И и І і Й й К к Л л М м Н н О о П п Р р С с Т т У у Ф ф Х х Ц ц Ч ч Ш ш Щ щ Ъ ъ Ы ы Ь ь Э э Ю ю Я я";
+
+        $e = explode(" ", $escape_chars);
+        $r = explode(" ", $russian_chars);
+        $rus_array = explode("%u", $input);
+
+        $new_word = str_replace($e, $r, $rus_array);
+        $new_word = str_replace("%20", " ", $new_word);
+
+        return (implode("", $new_word));
+    }
+    
+    public static function setOption(array $options = [], $key = null, $default_value = null)
+    {
+        if (!is_array($options)) return $default_value;
+
+        if (is_null($key)) return $default_value;
+
+        return array_key_exists($key, $options) ? $options[ $key ] : $default_value;
+    }
 }
 
 # -eof-
