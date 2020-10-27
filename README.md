@@ -40,7 +40,7 @@ new \SteamBoat\MySQLWrapper($config, $pdo_connector, $logger = null);
 
 ##  Изменения в функциях 
 
-function getDataSetFromSphinx() --> Arris\Toolkit\SphinxToolkit::getDatasetIDs() , требует SphinxToolkit v 1.1
+function getDataSetFromSphinx() --> ????????????????????? не реализовано в `Arris\Toolkit\SphinxToolkit::getDatasetIDs()` (добавляем в каждый проект индивидуально, в трейты)
 
 SBCommon::getRandomString       --> SBEngine::getRandomString()
 SBCommon::getRandomFilename     --> SBEngine::getRandomFilename()
@@ -53,7 +53,7 @@ logSiteUsage                    --> SBEngine::logSiteUsage()
 simpleSendEMAIL                 --> SBEngine::simpleSendEMAIL()
 
 sanitizeHTMLData                --> SBEngine::sanitizeHTMLData()
-normalizeSerialData             --> SbEngine::normalizeSerialData()
+normalizeSerialData             --> SBEngine::normalizeSerialData()
 
 unEscapeString                  --> SBEngine::unEscapeString() <-- но вообще её надо выпилить, хз зачем её применяют
 

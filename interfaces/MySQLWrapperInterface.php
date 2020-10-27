@@ -92,7 +92,7 @@ interface MySQLWrapperInterface
     public function create($fields, $table, $hash = null, $joins = null, $needpages = true):string;
 
     /**
-     * Выполнить запрос через PDO, коннектор по умолчанию NULL
+     * Выполнить запрос через PDO, коннектор - передан в конструктор класса
      *
      * @param $query
      * @param $dataset
@@ -100,6 +100,13 @@ interface MySQLWrapperInterface
      * @throws Exception
      */
     public function pdo_query(string $query, array $dataset);
+    
+    /**
+     * Вернуть результаты запроса
+     *
+     * @return mixed
+     */
+    public function pdo_result();
 
     /**
      * Last insert id сделанный через PDO-коннекшен

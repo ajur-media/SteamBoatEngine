@@ -5,6 +5,7 @@ namespace SteamBoat;
 use mysqli_result;
 
 use PDO;
+use PDOStatement;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 
@@ -36,6 +37,11 @@ class MySQLWrapper implements MySQLWrapperInterface
 
     public $charset;
     public $charset_collate;
+    
+    /**
+     * @var float
+     */
+    private $slow_query_threshold;
 
     // счетчик кол-ва запросов в базу
     public $mysqlcountquery = 0;
@@ -51,10 +57,20 @@ class MySQLWrapper implements MySQLWrapperInterface
      * @var array
      */
     public $db_config = [];
-
+    
+    /**
+     * @var int
+     */
     public $total = 0;
+    
+    /**
+     * @var array
+     */
     public $pages = [];
-
+    
+    /**
+     * @var array
+     */
     public $options = [];
 
     /**
@@ -71,29 +87,33 @@ class MySQLWrapper implements MySQLWrapperInterface
      * @var LoggerInterface|NullLogger
      */
     private $_logger = null;
-
+    
+    /**
+     * @var mixed
+     */
+    private $pdo_result;
+    /**
+     * @var bool|PDOStatement
+     */
+    private $pdo_state;
+    
     public function __construct($config, PDO $pdo_connector, LoggerInterface $logger = null)
     {
-        $this->_logger = $logger instanceof LoggerInterface
-            ? $logger
-            : new NullLogger();
-
-        $this->pdo = $pdo_connector;
-
-        $this->options['DB.SLOW_QUERY.THRESHOLD'] = getenv('DB.SLOW_QUERY_THRESHOLD') ?: 1;
-
         if (empty($config)) {
             $this->_logger->emergency('[MYSQL ERROR] at ' . __CLASS__ . '->' . __METHOD__ . ' : DB Config is empty', [var_export($config, true)]);
         }
-
+    
         $this->db_config = $config;
-
+        
+        $this->pdo = $pdo_connector;
+        
         $this->hostname = $this->db_config['hostname'];
         $this->port     = $this->db_config['port'];
         $this->username = $this->db_config['username'];
         $this->password = $this->db_config['password'];
         $this->database = $this->db_config['database'];
-
+        $this->slow_query_threshold = getenv('DB.SLOW_QUERY_THRESHOLD') ?: 1;
+    
         if (!array_key_exists('charset', $this->db_config)) {
             $this->charset = self::DEFAULT_CHARSET;
         } elseif (!is_null($this->db_config['charset'])) {
@@ -109,7 +129,13 @@ class MySQLWrapper implements MySQLWrapperInterface
         } else {
             $this->charset_collate = null;
         }
-
+    
+        if (array_key_exists('slow_query_threshold', $this->db_config)) $this->slow_query_threshold = (float)$this->db_config['slow_query_threshold'];
+    
+        $this->_logger = $logger instanceof LoggerInterface
+            ? $logger
+            : new NullLogger();
+    
         $this->connect();
     }
 
@@ -118,7 +144,6 @@ class MySQLWrapper implements MySQLWrapperInterface
         $this->db = mysqli_connect($this->hostname, $this->username, $this->password, $this->database, $this->port);
 
         if (mysqli_connect_error()) {
-
             $this->_logger->emergency('[MYSQL ERROR] ', [mysqli_connect_errno(), mysqli_connect_error(), $this->db_config]);
 
             die(
@@ -423,7 +448,7 @@ class MySQLWrapper implements MySQLWrapperInterface
             ]);
         }
 
-        if (($time_consumed > $this->options['DB_SLOW_QUERY_THRESHOLD'])) {
+        if (($time_consumed > $this->slow_query_threshold)) {
             $this->_logger->info("mysqli_query() slow: ", [
                 $time_consumed,
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
@@ -441,18 +466,28 @@ class MySQLWrapper implements MySQLWrapperInterface
         $r = mysqli_fetch_array($res);
         return $r[$row];
     }
-
+    
     public function pdo_query(string $query, array $dataset)
     {
         $time_start = microtime(true);
+    
+        $this->pdo_state = $this->pdo->prepare($query);
+        
+        foreach ($dataset as $key => $value) {
+            if (is_array($value)) {
+                $type = (count($value) > 1) ? $value[1] : PDO::PARAM_STR;
+    
+                $this->pdo_state->bindValue($key, $value[0], $type);
+            } else {
+                $this->pdo_state->bindValue($key, $value, PDO::PARAM_STR);
+            }
+        }
 
-        $sth = $this->pdo->prepare($query);
-
-        $result = $sth->execute($dataset);
+        $execute_result = $this->pdo_state->execute();
 
         $time_consumed = microtime(true) - $time_start;
 
-        if (!$result) {
+        if (!$execute_result) {
             $this->request_error = true;
             $this->_logger->error("PDO::execute() error: ", [
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
@@ -461,7 +496,7 @@ class MySQLWrapper implements MySQLWrapperInterface
             ]);
         }
 
-        if (($time_consumed > $this->options['DB.SLOW_QUERY.THRESHOLD'])) {
+        if (($time_consumed > $this->slow_query_threshold)) {
             $this->_logger->info("PDO::execute() slow: ", [
                 $time_consumed,
                 ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
@@ -469,12 +504,16 @@ class MySQLWrapper implements MySQLWrapperInterface
             ]);
         }
 
-        unset($sth);
-
         $this->mysqlcountquery++;
         $this->mysqlquerytime += $time_consumed;
-        $this->result = $result;
-        return $result;
+        $this->result = $execute_result;
+        
+        return $execute_result;
+    }
+    
+    public function pdo_result()
+    {
+        return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll() : [];
     }
 
     public function pdo_last_insert_id()

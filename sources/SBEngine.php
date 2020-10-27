@@ -293,7 +293,7 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
 
     public static function sanitizeHTMLData($body, $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<'])
     {
-        if (empty($bad_values)) $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<'];
+        if (!is_array($bad_values) || empty($bad_values)) $bad_values = ['+', '-', '~', '(', ')', '*', '"', '>', '<'];
         return str_replace($bad_values, '', addslashes($body));
     }
 
