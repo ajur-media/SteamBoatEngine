@@ -97,6 +97,11 @@ class MySQLWrapper implements MySQLWrapperInterface
      */
     private $pdo_state;
     
+    /**
+     * @var PDOWrapper
+     */
+    public $PDO;
+    
     public function __construct($config, PDO $pdo_connector, LoggerInterface $logger = null)
     {
         if (empty($config)) {
@@ -132,6 +137,9 @@ class MySQLWrapper implements MySQLWrapperInterface
     
         if (array_key_exists('slow_query_threshold', $this->db_config)) $this->slow_query_threshold = (float)$this->db_config['slow_query_threshold'];
     
+        $this->PDO = new PDOWrapper();
+        $this->PDO::init($pdo_connector, ['slow_query_threshold' => $this->slow_query_threshold ], $logger);
+        
         $this->_logger = $logger instanceof LoggerInterface
             ? $logger
             : new NullLogger();
@@ -512,6 +520,21 @@ class MySQLWrapper implements MySQLWrapperInterface
     }
     
     public function pdo_result()
+    {
+        return $this->pdo_state;
+    }
+    
+    public function pdo_fetch($row = 0)
+    {
+        return ($this->pdo_state instanceof PDOStatement) ? ($this->pdo_state->fetchAll())[$row] : [];
+    }
+
+    public function pdo_fetch_column($column = 0, $default = null)
+    {
+        return ($this->pdo_state instanceof PDOStatement) ? ($this->pdo_state->fetchColumn($column)) : $default;
+    }
+    
+    public function pdo_fetch_all()
     {
         return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll() : [];
     }

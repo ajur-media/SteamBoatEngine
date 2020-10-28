@@ -5,6 +5,7 @@ namespace SteamBoat;
 use Exception;
 use mysqli_result;
 use PDO;
+use PDOStatement;
 use Psr\Log\LoggerInterface;
 
 interface MySQLWrapperInterface
@@ -102,11 +103,35 @@ interface MySQLWrapperInterface
     public function pdo_query(string $query, array $dataset);
     
     /**
-     * Вернуть результаты запроса
+     * Возвращает PDO Statement
      *
-     * @return mixed
+     * @return bool|PDOStatement
      */
     public function pdo_result();
+    
+    /**
+     * Возвращает одну строку из результата запроса
+     *
+     * @param int $row
+     * @return array|mixed
+     */
+    public function pdo_fetch($row = 0);
+    
+    /**
+     * Возвращает колонку из результата запроса
+     *
+     * @param int $column
+     * @param null $default
+     * @return mixed|null
+     */
+    public function pdo_fetch_column($column = 0, $default = null);
+    
+    /**
+     * Возвращает все строки из результата запроса
+     *
+     * @return array
+     */
+    public function pdo_fetch_all();
 
     /**
      * Last insert id сделанный через PDO-коннекшен
