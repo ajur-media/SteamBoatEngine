@@ -116,9 +116,19 @@ class PDOWrapper implements PDOWrapperInterface
         return (self::$sth instanceof PDOStatement) ? self::$sth->fetchAll() : [];
     }
     
-    public static function lastInsertID()
+    public static function fetchAllCallback($class = null)
     {
-        return self::$dbh->lastInsertId();
+        if ($class instanceof \stdClass) {
+            return (self::$sth instanceof PDOStatement) ? self::$sth->fetchAll(PDO::FETCH_CLASS, $class) : [];
+        } elseif (is_null($class)) {
+            return (self::$sth instanceof PDOStatement) ? self::$sth->fetchAll() : [];
+        } else
+            return [];
+    }
+    
+    public static function lastInsertID($name = null):string
+    {
+        return self::$dbh->lastInsertId($name);
     }
     
     public static function getStatistic()

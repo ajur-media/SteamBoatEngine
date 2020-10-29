@@ -132,15 +132,14 @@ interface MySQLWrapperInterface
      * @return array
      */
     public function pdo_fetch_all();
-
+    
     /**
      * Last insert id сделанный через PDO-коннекшен
      *
-     * @param null $pdo_connector
+     * @param null $name
      * @return string
-     * @throws Exception
      */
-    public function pdo_last_insert_id();
+    public function pdo_last_insert_id($name = null);
 
     /**
      * Возвращает количество сделанных запросов

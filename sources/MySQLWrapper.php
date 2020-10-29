@@ -534,14 +534,20 @@ class MySQLWrapper implements MySQLWrapperInterface
         return ($this->pdo_state instanceof PDOStatement) ? ($this->pdo_state->fetchColumn($column)) : $default;
     }
     
-    public function pdo_fetch_all()
+    public function pdo_fetch_all($fetch_style = null, $fetch_argument = null, array $ctor_args = array())
     {
-        return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll() : [];
+        // return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll() : [];
+        
+        if ($fetch_style instanceof \stdClass) {
+            return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll(PDO::FETCH_CLASS, $fetch_style, $ctor_args) : [];
+        } else {
+            return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll($fetch_style, $fetch_argument, $ctor_args) : [];
+        }
     }
 
-    public function pdo_last_insert_id()
+    public function pdo_last_insert_id($name = null)
     {
-        return $this->pdo->lastInsertId();
+        return $this->pdo->lastInsertId($name);
     }
 
     public function getQueryCount()
