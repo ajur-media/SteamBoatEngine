@@ -36,7 +36,7 @@ if (!function_exists('getResourcePath')) {
         
         $path
             = getenv('PATH.INSTALL')
-            . 'www/i/'
+            . '/www/i/'
             . $type
             . DIRECTORY_SEPARATOR
             . date("Y/m", $cdate);
