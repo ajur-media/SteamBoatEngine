@@ -44,8 +44,8 @@ class GDWrapper implements GDWrapperInterface
      */
     public static function init($options = [], LoggerInterface $logger = null)
     {
-        self::$default_jpeg_quality = $options['JPEG_COMPRESSION_QUALITY'] ?? 100;
-        self::$default_webp_quality = $options['WEBP_COMPRESSION_QUALITY'] ?? 80;
+        self::$default_jpeg_quality = (int)$options['JPEG_COMPRESSION_QUALITY'] ?? 100;
+        self::$default_webp_quality = (int)$options['WEBP_COMPRESSION_QUALITY'] ?? 80;
 
         self::$default_jpeg_quality
             = is_integer(self::$default_jpeg_quality)
@@ -64,7 +64,7 @@ class GDWrapper implements GDWrapperInterface
     
     }
 
-    public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
         if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -95,7 +95,7 @@ class GDWrapper implements GDWrapperInterface
                 imagesavealpha($image_destination, true);
             }
 
-            self::storeImageToFile($fn_target, $image_destination, $extension);
+            self::storeImageToFile($fn_target, $image_destination, $extension, $image_quality);
 
             imagedestroy($image_destination);
             imagedestroy($image_source);
@@ -167,34 +167,36 @@ class GDWrapper implements GDWrapperInterface
         }
         return array($newwidth, $newheight);
     }
-
+    
     /**
      * @param $fn_target
      * @param $image_destination
      * @param $extension
+     * @param null $image_quality
      * @return bool
      */
-    private static function storeImageToFile($fn_target, $image_destination, $extension)
+    private static function storeImageToFile($fn_target, $image_destination, $extension, $image_quality = null)
     {
-        $result = false;
-
         // JPG/PNG/GIF/JPG
         if ($extension == "jpg") {
-            $result = imagejpeg($image_destination, $fn_target, self::$default_jpeg_quality);
+            $quality = is_null($image_quality) ? self::$default_jpeg_quality : $image_quality;
+            $result = imagejpeg($image_destination, $fn_target, $quality);
         } elseif ($extension == "png") {
             $result = imagepng($image_destination, $fn_target);
         } elseif ($extension == "gif") {
             $result = imagegif($image_destination, $fn_target);
         } elseif ($extension == 'webp') {
+            $quality = is_null($image_quality) ? self::$default_webp_quality : $image_quality;
             $result = imagewebp($image_destination, $fn_target, self::$default_webp_quality);
         } else {
-            $result = imagejpeg($image_destination, $fn_target, self::$default_jpeg_quality);
+            $quality = is_null($image_quality) ? self::$default_jpeg_quality : $image_quality;
+            $result = imagejpeg($image_destination, $fn_target, $quality);
         }
 
         return $result;
     }
 
-    public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
         if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -232,7 +234,7 @@ class GDWrapper implements GDWrapperInterface
                 imagesavealpha($image_destination, true);
             }
 
-            self::storeImageToFile($fn_target, $image_destination, $extension);
+            self::storeImageToFile($fn_target, $image_destination, $extension, $image_quality);
 
             return true;
         } else {
@@ -240,7 +242,7 @@ class GDWrapper implements GDWrapperInterface
         }
     }
 
-    public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
         if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -269,7 +271,7 @@ class GDWrapper implements GDWrapperInterface
                 imagesavealpha($image_destination, true);
             }
 
-            self::storeImageToFile($fn_target, $image_destination, $extension);
+            self::storeImageToFile($fn_target, $image_destination, $extension, $image_quality);
 
             imagedestroy($image_destination);
             imagedestroy($image_source);
@@ -279,7 +281,7 @@ class GDWrapper implements GDWrapperInterface
         }
     }
 
-    public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, int $image_quality = null):bool
     {
         if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -358,7 +360,7 @@ class GDWrapper implements GDWrapperInterface
                 }
             }
 
-            self::storeImageToFile($fn_target, $image_destination, $extension);
+            self::storeImageToFile($fn_target, $image_destination, $extension, $image_quality);
 
             imagedestroy($image_destination);
             imagedestroy($image_source);

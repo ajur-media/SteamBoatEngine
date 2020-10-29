@@ -10,21 +10,49 @@ use SteamBoat\GDWrapper;
  */
 interface SteamBoatHelpers
 {
+    function getResourcePath($type = "photos", $cdate = null): string;
     function getimagepath($type = "photos", $cdate = null):string;
     function pluralForm($number, $forms, string $glue = '|'):string;
 
-    function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
-    function resizeimageaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
-    function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
-    function resizepictureaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
+    function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool;
+    function resizeimageaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool;
+    function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool;
+    function resizepictureaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool;
 
     function toRange($value, $min, $max);
+}
+
+if (!function_exists('getResourcePath')) {
+    /**
+     * Возвращает путь до ресурса в symlinked-хранилище
+     *
+     * @param string $type
+     * @param null $cdate
+     * @return string
+     */
+    function getResourcePath($type = "photos", $cdate = null): string
+    {
+        $cdate = is_null($cdate) ? time() : strtotime($cdate);
+        
+        $path
+            = getenv('PATH.INSTALL')
+            . 'www/i/'
+            . $type
+            . DIRECTORY_SEPARATOR
+            . date("Y/m", $cdate);
+        
+        if (!is_dir($path)) {
+            mkdir($path, 0777, true);
+        }
+        
+        return $path;
+    }
 }
 
 if (!function_exists('getimagepath')) {
 
     /**
-     *
+     * Возвращает путь до ресурса
      *
      * @param string $type
      * @param null $cdate
@@ -80,65 +108,66 @@ if (!function_exists('pluralForm')) {
 }
 
 if (!function_exists('getfixedpicture')) {
-
+    
     /**
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth
-     * @param $maxheight
+     * @param string $fn_source
+     * @param string $fn_target
+     * @param int $maxwidth
+     * @param int $maxheight
+     * @param null $image_quality
      * @return bool
-     * @throws Exception
      */
-    function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    function getfixedpicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
-        return GDWrapper::getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::getFixedPicture($fn_source, $fn_target, $maxwidth, $maxheight, $image_quality);
     }
 }
 
 if (!function_exists('resizeimageaspect')) {
-
+    
     /**
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth
-     * @param $maxheight
+     * @param string $fn_source
+     * @param string $fn_target
+     * @param int $maxwidth
+     * @param int $maxheight
+     * @param null $image_quality
      * @return bool
      */
-    function resizeimageaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    function resizeimageaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
-        return GDWrapper::resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::resizeImageAspect($fn_source, $fn_target, $maxwidth, $maxheight, $image_quality);
     }
 }
 
 if (!function_exists('verticalimage')) {
-
+    
     /**
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth
-     * @param $maxheight
+     * @param string $fn_source
+     * @param string $fn_target
+     * @param int $maxwidth
+     * @param int $maxheight
+     * @param null $image_quality
      * @return bool
-     * @throws Exception
      */
-    function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
-        return GDWrapper::verticalimage($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::verticalimage($fn_source, $fn_target, $maxwidth, $maxheight, $image_quality);
     }
 }
 
 if (!function_exists('resizepictureaspect')) {
-
+    
     /**
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth
-     * @param $maxheight
+     * @param string $fn_source
+     * @param string $fn_target
+     * @param int $maxwidth
+     * @param int $maxheight
+     * @param null $image_quality
      * @return bool
-     * @throws Exception
      */
-    function resizepictureaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool
+    function resizepictureaspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
-        return GDWrapper::resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight);
+        return GDWrapper::resizePictureAspect($fn_source, $fn_target, $maxwidth, $maxheight, $image_quality);
     }
 }
 

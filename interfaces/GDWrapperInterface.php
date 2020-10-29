@@ -24,7 +24,7 @@ interface GDWrapperInterface
      * @param $maxheight
      * @return bool
      */
-    public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
+    public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool;
 
     /**
      * Ресайзит картинку по большей из сторон
@@ -37,7 +37,7 @@ interface GDWrapperInterface
      * @param $maxheight
      * @return bool
      */
-    public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool ;
+    public static function resizePictureAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool ;
 
     /**
      *
@@ -49,20 +49,21 @@ interface GDWrapperInterface
      * @param $maxheight
      * @return bool
      */
-    public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool ;
-
+    public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool ;
+    
     /**
      * Ресайзит картинку в фиксированные размеры
      *
      * = getfixedpicture()
      *
-     * @param $fn_source
-     * @param $fn_target
-     * @param $maxwidth - maximal target width
-     * @param $maxheight - maximal target height
+     * @param string $fn_source
+     * @param string $fn_target
+     * @param int $maxwidth - maximal target width
+     * @param int $maxheight - maximal target height
+     * @param int|null $image_quality - качество картинки (null) означает взять из настроек класса
      * @return bool
      */
-    public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight):bool;
+    public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, int $image_quality = null):bool;
 
     /**
      * Добавляет на изображение вотермарк (
