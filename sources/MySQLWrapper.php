@@ -8,6 +8,7 @@ use PDO;
 use PDOStatement;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use stdClass;
 
 
 /**
@@ -538,13 +539,14 @@ class MySQLWrapper implements MySQLWrapperInterface
     {
         // return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll() : [];
         
-        if ($fetch_style instanceof \stdClass) {
+        if (is_string($fetch_style) || ($fetch_style instanceof stdClass)) {
             return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll(PDO::FETCH_CLASS, $fetch_style, $ctor_args) : [];
         } else {
             return ($this->pdo_state instanceof PDOStatement) ? $this->pdo_state->fetchAll($fetch_style, $fetch_argument, $ctor_args) : [];
         }
     }
 
+    
     public function pdo_last_insert_id($name = null)
     {
         return $this->pdo->lastInsertId($name);

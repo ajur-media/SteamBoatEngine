@@ -5,6 +5,7 @@ namespace SteamBoat;
 use PDO;
 use PDOStatement;
 use Psr\Log\LoggerInterface;
+use stdClass;
 
 /**
  * @todo: -> Arris package
@@ -118,7 +119,7 @@ class PDOWrapper implements PDOWrapperInterface
     
     public static function fetchAllCallback($class = null)
     {
-        if ($class instanceof \stdClass) {
+        if (is_string($class) || ($class instanceof stdClass)) {
             return (self::$sth instanceof PDOStatement) ? self::$sth->fetchAll(PDO::FETCH_CLASS, $class) : [];
         } elseif (is_null($class)) {
             return (self::$sth instanceof PDOStatement) ? self::$sth->fetchAll() : [];
