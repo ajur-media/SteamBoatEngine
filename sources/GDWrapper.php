@@ -63,6 +63,39 @@ class GDWrapper implements GDWrapperInterface
             : new NullLogger();
     
     }
+    
+    public static function cropImage(string $fn_source, string $fn_target, array $xy_source, array $wh_dest, array $wh_source, $quality = null): bool
+    {
+        if (!is_readable($fn_source)) {
+            self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
+            return false;
+        }
+        
+        list($width, $height, $type) = getimagesize($fn_source);
+        list($image_source, $extension) = self::createImageFromFile($fn_source, $type);
+        
+        if ($image_source) {
+            $image_destination = imagecreatetruecolor($wh_dest[0], $wh_dest[1]);
+    
+            imagecopyresampled(
+                $image_destination,
+                $image_source,
+                0, 0,
+                $xy_source[0], $xy_source[1],
+                $wh_dest[0], $wh_dest[1],
+                $wh_source[0], $wh_source[1]);
+    
+            self::storeImageToFile($fn_target, $image_destination, $extension, $quality);
+    
+            imagedestroy($image_destination);
+            imagedestroy($image_source);
+            return true;
+        } else {
+            self::$logger->error('Not image: ', [ $fn_source ]);
+            echo "not image {$fn_source}";
+            return false;
+        }
+    }
 
     public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
     {
@@ -118,7 +151,8 @@ class GDWrapper implements GDWrapperInterface
     private static function createImageFromFile($fname, $type)
     {
         if ($type == IMAGETYPE_BMP) {
-            return [null, null];
+            $ext = 'bmp';
+            $im = imagecreatefrombmp($fname);
         } else if ($type == IMAGETYPE_PNG) {
             $ext = 'png';
             $im = imagecreatefrompng($fname);

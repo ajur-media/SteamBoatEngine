@@ -107,6 +107,25 @@ if (!function_exists('pluralForm')) {
     }
 }
 
+if (!function_exists('cropimage')) {
+    
+    /**
+     * CropImage helper
+     *
+     * @param string $fn_source
+     * @param string $fn_target
+     * @param array $xy_source
+     * @param array $wh_dest
+     * @param array $wh_source
+     * @param null $quality
+     * @return bool
+     */
+    function cropImage(string $fn_source, string $fn_target, array $xy_source, array $wh_dest, array $wh_source, $quality = null): bool
+    {
+        return GDWrapper::cropImage($fn_source, $fn_target, $xy_source, $wh_dest, $wh_source, $quality);
+    }
+}
+
 if (!function_exists('getfixedpicture')) {
     
     /**
