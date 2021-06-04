@@ -42,20 +42,22 @@ new \SteamBoat\MySQLWrapper($config, $pdo_connector, $logger = null);
 
 function getDataSetFromSphinx() --> ????????????????????? не реализовано в `Arris\Toolkit\SphinxToolkit::getDatasetIDs()` (добавляем в каждый проект индивидуально, в трейты)
 
-SBCommon::getRandomString       --> SBEngine::getRandomString()
-SBCommon::getRandomFilename     --> SBEngine::getRandomFilename()
-SBCommon::is_ssl()              --> SBEngine::is_ssl()
+- `SBCommon::getRandomString       --> SBEngine::getRandomString()`
+- `SBCommon::getRandomFilename     --> SBEngine::getRandomFilename()`
+- `SBCommon::is_ssl()              --> SBEngine::is_ssl()`
 
-getEngineVersion                --> SBEngine::getEngineVersion()
-getSiteUsageMetrics             --> SBEngine::getSiteUsageMetrics()
-logSiteUsage                    --> SBEngine::logSiteUsage()
+- `getEngineVersion                --> SBEngine::getEngineVersion()`
+- `getSiteUsageMetrics             --> SBEngine::getSiteUsageMetrics()`
+- `logSiteUsage                    --> SBEngine::logSiteUsage()`
 
-simpleSendEMAIL                 --> SBEngine::simpleSendEMAIL()
+- `simpleSendEMAIL                 --> SBEngine::simpleSendEMAIL()`
 
-sanitizeHTMLData                --> SBEngine::sanitizeHTMLData()
-normalizeSerialData             --> SBEngine::normalizeSerialData()
+- `sanitizeHTMLData                --> SBEngine::sanitizeHTMLData()`
+- `normalizeSerialData             --> SBEngine::normalizeSerialData()`
 
-unEscapeString                  --> SBEngine::unEscapeString() <-- но вообще её надо выпилить, хз зачем её применяют
+- `unEscapeString                  --> SBEngine::unEscapeString()`
+ 
+но вообще её надо выпилить, хз зачем её применяют
 
 ## MySQLWrapper
 
