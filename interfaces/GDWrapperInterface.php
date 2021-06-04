@@ -78,7 +78,7 @@ interface GDWrapperInterface
      * @return bool
      */
     public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, int $image_quality = null):bool;
-
+    
     /**
      * Добавляет на изображение вотермарк (
      *
@@ -87,9 +87,10 @@ interface GDWrapperInterface
      * @param string $fn_source
      * @param array $params
      * @param int $pos_index
+     * @param null $quality
      * @return bool
      */
-    public static function addWaterMark(string $fn_source, array $params, int $pos_index):bool;
+    public static function addWaterMark(string $fn_source, array $params, int $pos_index, $quality = null):bool;
 
     /**
      * NEVER USED
@@ -100,7 +101,7 @@ interface GDWrapperInterface
      * @param string $dist
      * @return bool
      */
-    public static function rotate(string $fn_source, string $dist = ""):bool;
+    public static function rotate(string $fn_source, string $dist = "", $quality = null):bool;
 
     /**
      * Используется на 47news
@@ -112,5 +113,5 @@ interface GDWrapperInterface
      * @param string $dist
      * @return bool
      */
-    public static function rotate2(string $fn_source, string $dist = ""):bool ;
+    public static function rotate2(string $fn_source, string $dist = "", $quality = null):bool ;
 }

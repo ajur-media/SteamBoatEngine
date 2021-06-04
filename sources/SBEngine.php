@@ -148,7 +148,9 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
             . DIRECTORY_SEPARATOR;
 
         if (!is_dir($path)) {
-            mkdir($path, 0777, true);
+            if (!mkdir( $path, 0777, true ) && !is_dir( $path )) {
+                throw new \RuntimeException( sprintf( 'Directory "%s" was not created', $path ) );
+            }
         }
 
         return $path;
@@ -212,7 +214,7 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
 
         $salt = '';
         for ($i = 0; $i < $length; $i++) {
-            $salt .= $dictionary[mt_rand(0, $dictionary_len - 1)];
+            $salt .= $dictionary[random_int(0, $dictionary_len - 1)];
         }
 
         return (date_format(date_create(), $prefix_format)) . '_' . $salt . $suffix;
@@ -225,7 +227,7 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
         $dictionary_len = strlen($dictionary);
 
         for ($i = 0; $i < $length; $i++) {
-            $salt .= $dictionary[ mt_rand(0, $dictionary_len - 1) ];
+            $salt .= $dictionary[ random_int(0, $dictionary_len - 1) ];
         }
 
         return $salt;
@@ -334,9 +336,8 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
         $e = explode(" ", $escape_chars);
         $r = explode(" ", $russian_chars);
         $rus_array = explode("%u", $input);
-
-        $new_word = str_replace($e, $r, $rus_array);
-        $new_word = str_replace("%20", " ", $new_word);
+    
+        $new_word = str_replace( array( $e, "%20" ), array( $r, " " ), $rus_array );
 
         return (implode("", $new_word));
     }

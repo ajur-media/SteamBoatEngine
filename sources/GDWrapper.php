@@ -21,7 +21,7 @@ use Psr\Log\NullLogger;
  */
 class GDWrapper implements GDWrapperInterface
 {
-    const VERSION = "4.0";
+    const VERSION = "4.1";
 
     /**
      * @var int
@@ -44,16 +44,16 @@ class GDWrapper implements GDWrapperInterface
      */
     public static function init($options = [], LoggerInterface $logger = null)
     {
-        self::$default_jpeg_quality = (int)$options['JPEG_COMPRESSION_QUALITY'] ?? 100;
-        self::$default_webp_quality = (int)$options['WEBP_COMPRESSION_QUALITY'] ?? 80;
+        self::$default_jpeg_quality = intval($options['JPEG_COMPRESSION_QUALITY']) ?? 100;
+        self::$default_webp_quality = intval($options['WEBP_COMPRESSION_QUALITY']) ?? 80;
 
         self::$default_jpeg_quality
-            = is_integer(self::$default_jpeg_quality)
+            = is_int(self::$default_jpeg_quality)
             ? toRange(self::$default_jpeg_quality, 0, 100)
             : 100;
 
         self::$default_webp_quality
-            = is_integer(self::$default_webp_quality)
+            = is_int(self::$default_webp_quality)
             ? toRange(self::$default_webp_quality, 0, 100)
             : 80;
     
@@ -90,11 +90,11 @@ class GDWrapper implements GDWrapperInterface
             imagedestroy($image_destination);
             imagedestroy($image_source);
             return true;
-        } else {
-            self::$logger->error('Not image: ', [ $fn_source ]);
-            echo "not image {$fn_source}";
-            return false;
         }
+    
+        self::$logger->error('Not image: ', [ $fn_source ]);
+        echo "not image {$fn_source}";
+        return false;
     }
 
     public static function resizeImageAspect(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
@@ -116,14 +116,14 @@ class GDWrapper implements GDWrapperInterface
 
             // Resize
             $image_destination = imagecreatetruecolor($newwidth, $newheight);
-            if ($extension == "gif" or $extension == "png") {
+            if ($extension == "gif" || $extension == "png") {
                 imagealphablending($image_destination, true);
                 imagefill($image_destination, 0, 0, imagecolorallocatealpha($image_destination, 0, 0, 0, 127));
             }
 
             imagecopyresampled($image_destination, $image_source, 0, 0, 0, 0, $newwidth, $newheight, $width, $height);
 
-            if ($extension == "gif" or $extension == "png") {
+            if ($extension == "gif" || $extension == "png") {
                 imagealphablending($image_destination, false);
                 imagesavealpha($image_destination, true);
             }
@@ -133,12 +133,11 @@ class GDWrapper implements GDWrapperInterface
             imagedestroy($image_destination);
             imagedestroy($image_source);
             return true;
-        } else {
-            self::$logger->error('Not image: ', [ $fn_source ]);
-            echo "not image {$fn_source}";
-            return false;
         }
-
+    
+        self::$logger->error('Not image: ', [ $fn_source ]);
+        echo "not image {$fn_source}";
+        return false;
     }
 
     /**
@@ -165,6 +164,9 @@ class GDWrapper implements GDWrapperInterface
         } else if ($type == IMAGETYPE_WEBP) {
             $ext = 'webp';
             $im = imagecreatefromwebp($fname);
+        } else {
+            $ext = '';
+            $im = false;
         }
 
         return [$im, $ext];
@@ -212,16 +214,16 @@ class GDWrapper implements GDWrapperInterface
     private static function storeImageToFile($fn_target, $image_destination, $extension, $image_quality = null)
     {
         // JPG/PNG/GIF/JPG
-        if ($extension == "jpg") {
+        if ($extension === "jpg") {
             $quality = is_null($image_quality) ? self::$default_jpeg_quality : $image_quality;
             $result = imagejpeg($image_destination, $fn_target, $quality);
-        } elseif ($extension == "png") {
+        } elseif ($extension === "png") {
             $result = imagepng($image_destination, $fn_target);
-        } elseif ($extension == "gif") {
+        } elseif ($extension === "gif") {
             $result = imagegif($image_destination, $fn_target);
-        } elseif ($extension == 'webp') {
+        } elseif ($extension === 'webp') {
             $quality = is_null($image_quality) ? self::$default_webp_quality : $image_quality;
-            $result = imagewebp($image_destination, $fn_target, self::$default_webp_quality);
+            $result = imagewebp($image_destination, $fn_target, $quality);
         } else {
             $quality = is_null($image_quality) ? self::$default_jpeg_quality : $image_quality;
             $result = imagejpeg($image_destination, $fn_target, $quality);
@@ -271,9 +273,9 @@ class GDWrapper implements GDWrapperInterface
             self::storeImageToFile($fn_target, $image_destination, $extension, $image_quality);
 
             return true;
-        } else {
-            return false;
         }
+    
+        return false;
     }
 
     public static function verticalimage(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, $image_quality = null):bool
@@ -310,9 +312,9 @@ class GDWrapper implements GDWrapperInterface
             imagedestroy($image_destination);
             imagedestroy($image_source);
             return true;
-        } else {
-            return false;
         }
+    
+        return false;
     }
 
     public static function getFixedPicture(string $fn_source, string $fn_target, int $maxwidth, int $maxheight, int $image_quality = null):bool
@@ -400,12 +402,12 @@ class GDWrapper implements GDWrapperInterface
             imagedestroy($image_source);
             imagedestroy($im_res);
             return true;
-        } else {
-            return false;
         }
+    
+        return false;
     }
 
-    public static function addWaterMark(string $fn_source, array $params, int $pos_index):bool
+    public static function addWaterMark(string $fn_source, array $params, int $pos_index, $quality = null):bool
     {
         $watermark = $params['watermark'];
         $margin = $params['margin'];
@@ -415,7 +417,9 @@ class GDWrapper implements GDWrapperInterface
             3 => "right-bottom",
             4 => "left-bottom",
         );
-        if (!in_array($pos_index, array_keys($positions))) return false;
+        if (!array_key_exists( $pos_index, $positions )) {
+            return false;
+        }
 
         $watermark = imagecreatefrompng($watermark);
 
@@ -460,16 +464,16 @@ class GDWrapper implements GDWrapperInterface
             imagecopy($image_source, $watermark, $ns_x, $ns_y, 0, 0, $watermark_width, $watermark_height);
             imagedestroy($watermark);
 
-            self::storeImageToFile($fn_source, $image_source, $extension);
+            self::storeImageToFile($fn_source, $image_source, $extension, $quality);
 
             imagedestroy($image_source);
             return true;
-        } else {
-            return false;
         }
+    
+        return false;
     }
 
-    public static function rotate2(string $fn_source, string $dist = ""):bool
+    public static function rotate2(string $fn_source, string $dist = "", $quality = null):bool
     {
         if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -489,15 +493,15 @@ class GDWrapper implements GDWrapperInterface
             }
             $image_destination = imagerotate($image_source, $degrees, 0);
 
-            self::storeImageToFile($fn_source, $image_destination, $extension);
+            self::storeImageToFile($fn_source, $image_destination, $extension, $quality);
 
             return true;
-        } else {
-            return false;
         }
+    
+        return false;
     }
 
-    public static function rotate(string $fn_source, string $dist = ""):bool
+    public static function rotate(string $fn_source, string $dist = "", $quality = null):bool
     {
         if (!is_readable($fn_source)) {
             self::$logger->error("Static method " . __METHOD__ . " wants missing file", [$fn_source]);
@@ -517,12 +521,12 @@ class GDWrapper implements GDWrapperInterface
             }
             $image_destination = self::rotateimage($image_source, $degrees);
 
-            self::storeImageToFile($fn_source, $image_destination, $extension);
+            self::storeImageToFile($fn_source, $image_destination, $extension, $quality);
 
             return true;
-        } else {
-            return false;
         }
+    
+        return false;
     }
 
     /**

@@ -72,7 +72,7 @@ class PDOWrapper implements PDOWrapperInterface
         
         if (!$execute_result) {
             self::$logger->error("PDO::execute() error: ", [
-                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
+                ((PHP_SAPI === "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
                 self::$dbh->errorInfo(),
                 $query
             ]);
@@ -81,7 +81,7 @@ class PDOWrapper implements PDOWrapperInterface
         if (($time_consumed > self::$slow_query_threshold)) {
             self::$logger->info("PDO::execute() slow: ", [
                 $time_consumed,
-                ((php_sapi_name() == "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
+                ((PHP_SAPI === "cli") ? __FILE__ : ($_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
                 $query
             ]);
         }
@@ -121,10 +121,13 @@ class PDOWrapper implements PDOWrapperInterface
     {
         if (is_string($class) || ($class instanceof stdClass)) {
             return (self::$sth instanceof PDOStatement) ? self::$sth->fetchAll(PDO::FETCH_CLASS, $class) : [];
-        } elseif (is_null($class)) {
+        }
+    
+        if (is_null($class)) {
             return (self::$sth instanceof PDOStatement) ? self::$sth->fetchAll() : [];
-        } else
-            return [];
+        }
+    
+        return [];
     }
     
     public static function lastInsertID($name = null):string

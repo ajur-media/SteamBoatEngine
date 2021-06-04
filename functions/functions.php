@@ -42,7 +42,9 @@ if (!function_exists('getResourcePath')) {
             . date("Y/m", $cdate);
         
         if (!is_dir($path)) {
-            mkdir($path, 0777, true);
+            if (!mkdir( $path, 0777, true ) && !is_dir( $path )) {
+                throw new \RuntimeException( sprintf( 'Directory "%s" was not created', $path ) );
+            }
         }
         
         return $path;
@@ -71,7 +73,9 @@ if (!function_exists('getimagepath')) {
             . DIRECTORY_SEPARATOR;
 
         if (!is_dir($path)) {
-            mkdir($path, 0777, true);
+            if (!mkdir( $path, 0777, true ) && !is_dir( $path )) {
+                throw new \RuntimeException( sprintf( 'Directory "%s" was not created', $path ) );
+            }
         }
 
         return $path;
@@ -82,7 +86,7 @@ if (!function_exists('pluralForm')) {
     /**
      *
      * @param $number
-     * @param array $forms (array or string with glues, x|y|z or [x,y,z]
+     * @param mixed $forms (array or string with glues, x|y|z or [x,y,z]
      * @param string $glue
      * @return string
      */
@@ -240,7 +244,7 @@ if (!function_exists('smarty_modifier_html_substr')) {
                 $noTagLength = strlen(strip_tags($string));
                 
                 // Parser loop
-                for ($j = 0; $j < strlen($string); $j++) {
+                for ($j = 0, $jMax = strlen( $string ); $j < $jMax; $j++) {
                     
                     $currentChar = substr($string, $j, 1);
                     $ret .= $currentChar;
@@ -280,7 +284,7 @@ if (!function_exists('smarty_modifier_html_substr')) {
                                 $currentTag = substr($currentTag, 1, -1);
                             }
                             
-                            array_push($tagsArray, $currentTag);
+                            $tagsArray[] = $currentTag;
                             
                         } else if (strpos($currentTag, "</") !== FALSE) {
                             array_pop($tagsArray);
@@ -304,7 +308,7 @@ if (!function_exists('smarty_modifier_html_substr')) {
                 }
                 
                 // Close broken XHTML elements
-                while (sizeof($tagsArray) != 0) {
+                while (count($tagsArray) != 0) {
                     $aTag = array_pop($tagsArray);
                     // if a <p> or <li> tag needs to be closed, put the add-string in first
                     if (($aTag == "p" || $aTag == "li") && strlen($string) > $length) {
@@ -321,80 +325,15 @@ if (!function_exists('smarty_modifier_html_substr')) {
             // if we have not added the add-string already
             if (strlen($string) > $length && $addstringAdded == false) {
                 return ($ret . $addstring);
-            } else {
-                return ($ret);
             }
-        } else {
-            return ($string);
+    
+            return ($ret);
         }
+    
+        return ($string);
     }
     
 }
-
-/**
- * Doctor Piter
- */
-if (!function_exists('convert_UTF16BE_to_UTF8')){
-    function convert_UTF16BE_to_UTF8($t)
-    {
-        //return preg_replace( '#%u([0-9A-F]{1,4})#ie', "'& #'.hexdec('\\1').';'", $t );
-        // return preg_replace('#%u([0-9A-F]{4})#se', 'iconv("UTF-16BE","UTF-8",pack("H4","$1"))', $t);
-        return preg_replace_callback('#%u([0-9A-F]{4})#s', function (){
-            iconv("UTF-16BE","UTF-8", pack("H4","$1"));
-        }, $t);
-    }
-}
-
-if (!function_exists('rewrite_hrefs_to_blank')) {
-    
-    /**
-     *
-     * @param $text
-     * @return string|string[]|null
-     */
-    function rewrite_hrefs_to_blank(string $text):string
-    {
-        return preg_replace_callback("/<a([^>]+)>(.*?)<\/a>/i", function ($matches) {
-            $matches[1] = trim($matches[1]);
-            $arr = [];
-            
-            $matches[1] = preg_replace("/([\"']{0,})\s([a-zA-Z]+\=(\"|'))/i", "$1-!break!-$2", $matches[1]);
-            $matches[1] = explode("-!break!-", $matches[1]);
-            
-            // предполагаем, что по-умолчанию у всех ссылок нужно ставить target=_blank
-            $blank = true;
-            foreach ($matches[1] as $v) {
-                $r = explode("=", $v, 2);
-                $r[1] = trim($r[1], "'");
-                $r[1] = trim($r[1], '"');
-                $arr[$r[0]] = $r[1];
-                if ($r[0] == "href") {
-                    // условия, исключающие установку target=_blank
-                    if (!preg_match("/([a-zA-Z]+)\:\/\/(.*)/i", $r[1])) {
-                        // ссылка не начинается с какого-либо протокола, соот-но она внутренняя и новое окно не нужно
-                        $blank = false;
-                    } else {
-                        // ссылка внешняя, и нам надо понять, не ведет ли она в наш же домен
-                        if (stristr($r[1], getenv('DOMAIN.FQDN'))) $blank = false;
-                    }
-                }
-            }
-            // если уже есть в списке target, то ничего не делаем
-            foreach ($arr as $k => $v) {
-                if ($k == "blank") $blank = false;
-            }
-            if ($blank) $arr['target'] = "_blank";
-            $prms = array();
-            foreach ($arr as $k => $v) {
-                $prms[] = "{$k}=\"{$v}\"";
-            }
-            $params_as_string = implode(" ", $prms);
-            return "<a {$params_as_string}>{$matches[2]}</a>";
-        }, $text);
-        
-    }
-}
-
 
 # -eof-
 

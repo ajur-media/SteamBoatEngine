@@ -43,7 +43,7 @@ class Template implements TemplateInterface
      */
     public static $search_mask_puid40;
     /**
-     * @var Logger|null
+     * @var LoggerInterface|null
      */
     private static $logger;
 
@@ -146,22 +146,19 @@ class Template implements TemplateInterface
             self::$response['status'] = 'ok';
 
             return json_encode(self::$response);
-
-        } elseif(self::$response['mode'] === 'AJAX' || self::$response['mode'] === 'AJAXHTML') {
+        }
+    
+        if (self::$response['mode'] === 'AJAX' || self::$response['mode'] === 'AJAXHTML') {
 
             self::$response['html'] = self::$smarty->fetch("__ajax_template.tpl");
             self::$response['status'] = 'ok';
 
             return self::$response['html'];
-
-        } else {
-
-            self::$response['html'] = self::$smarty->fetch("__main_template.tpl");
-
-            self::bindBanners();
-
-            return self::$response['html'];
         }
+    
+        self::$response['html'] = self::$smarty->fetch("__main_template.tpl");
+        self::bindBanners();
+        return self::$response['html'];
     }
 
     public static function bindTopic($value)

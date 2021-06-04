@@ -25,11 +25,15 @@ class DateTimeLocal implements DateTimeLocalInterface
 
     public static function convertDate(string $datetime, bool $is_show_time = false, string $year_suffix = 'г.'):string
     {
-        if ($datetime == "0000-00-00 00:00:00" or $datetime == "0000-00-00") return "-";
+        if ($datetime === "0000-00-00 00:00:00" || $datetime === "0000-00-00") return "-";
         list($y, $m, $d, $h, $i, $s) = sscanf($datetime, "%d-%d-%d %d:%d:%d");
 
-        $rusdate = $d . ' ' . self::ruMonths[$m] .
-            ($y ? " {$y} {$year_suffix}" : '');
+        $rusdate
+            = $d
+                . ' '
+                . self::ruMonths[$m]
+                . ($y ? " {$y} {$year_suffix}"
+            : '');
 
         if ($is_show_time) {
             $rusdate .= " " . sprintf("%02d", $h) . ":" . sprintf("%02d", $i);
