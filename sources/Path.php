@@ -21,22 +21,13 @@ class Path
      * Create (immutable)
      *
      * @param $path
+     * @param bool $isTrailingSlash
+     * @param bool $isAbsolutePath
      * @return Path
      */
-    public static function create($path)
+    public static function create($path, $isTrailingSlash = true, $isAbsolutePath = true)
     {
-        return new self($path);
-    }
-    
-    /**
-     * Create (alias)
-     *
-     * @param $path
-     * @return Path
-     */
-    public static function createImmutable($path)
-    {
-        return new self($path);
+        return new self($path, $isTrailingSlash, $isAbsolutePath);
     }
     
     /**
