@@ -119,39 +119,12 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
 
     public static function getContentURL(string $type = "photos", $creation_date = '', bool $final_slash = true): string
     {
-        $directory_separator = DIRECTORY_SEPARATOR;
         $cdate = empty($creation_date) ? time() : strtotime($creation_date);
-
-        $path = "/{$type}/" . date("Y{$directory_separator}m", $cdate);
+        
+        $path = DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, [
+            $type, date('Y', $cdate), date('m', $cdate)
+            ]);
         $path .= $final_slash ? '/' : '';
-
-        return $path;
-    }
-
-    public static function getContentPath(string $type = "photos", string $creation_date = ''): string
-    {
-        $STORAGE_FOLDER = self::$options['PROJECT_STORAGE'];
-
-        $directory_separator = DIRECTORY_SEPARATOR;
-
-        $creation_date = empty($creation_date) ? time() : strtotime($creation_date);
-
-        if (!in_array($type, self::$storages)) {
-            return "/tmp/";
-        }
-
-        $path
-            = $STORAGE_FOLDER
-            . self::$storages[$type]
-            . DIRECTORY_SEPARATOR
-            . date("Y{$directory_separator}m", $creation_date)
-            . DIRECTORY_SEPARATOR;
-
-        if (!is_dir($path)) {
-            if (!mkdir( $path, 0777, true ) && !is_dir( $path )) {
-                throw new \RuntimeException( sprintf( 'Directory "%s" was not created', $path ) );
-            }
-        }
 
         return $path;
     }
@@ -194,10 +167,12 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
     public static function is_ssl():bool
     {
         if (isset($_SERVER['HTTPS'])) {
-            if ('on' == strtolower($_SERVER['HTTPS']))
+            if ('on' == strtolower($_SERVER['HTTPS'])) {
                 return true;
-            if ('1' == $_SERVER['HTTPS'])
+            }
+            if ('1' == $_SERVER['HTTPS']) {
                 return true;
+            }
         } elseif (isset($_SERVER['SERVER_PORT']) && ('443' == $_SERVER['SERVER_PORT'])) {
             return true;
         }
@@ -260,13 +235,13 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
     public static function getSiteUsageMetrics(MySQLWrapper $mysql, array $config): array
     {
         return [
+            'site.routed'       =>  $config['ROUTED'] ?? '/',
+            'site.url'          =>  $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'],
+            'time.total'        =>  round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
             'memory.usage'      =>  memory_get_usage(true),
             'memory.peak'       =>  memory_get_peak_usage(true),
             'mysql.query_count' =>  $mysql->getQueryCount(),
             'mysql.query_time'  =>  round($mysql->getQueryTime(), 3),
-            'time.total'        =>  round(microtime(true) - $_SERVER['REQUEST_TIME'], 3),
-            'site.routed'       =>  $config['ROUTED'] ?? '/',
-            'site.url'          =>  $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']
         ];
     }
 
@@ -286,8 +261,7 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
         }
 
         if (self::$options['LOG_SITE_USAGE']) {
-            unset($metrics['time.start']);
-            unset($metrics['time.end']);
+            unset( $metrics[ 'time.start' ], $metrics[ 'time.end' ] );
             $logger->notice('Metrics:', $metrics);
         }
         return true;
@@ -330,16 +304,7 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
 
     public static function unEscapeString($input)
     {
-        $escape_chars = "0410 0430 0411 0431 0412 0432 0413 0433 0490 0491 0414 0434 0415 0435 0401 0451 0404 0454 0416 0436 0417 0437 0418 0438 0406 0456 0419 0439 041A 043A 041B 043B 041C 043C 041D 043D 041E 043E 041F 043F 0420 0440 0421 0441 0422 0442 0423 0443 0424 0444 0425 0445 0426 0446 0427 0447 0428 0448 0429 0449 042A 044A 042B 044B 042C 044C 042D 044D 042E 044E 042F 044F";
-        $russian_chars = "А а Б б В в Г г Ґ ґ Д д Е е Ё ё Є є Ж ж З з И и І і Й й К к Л л М м Н н О о П п Р р С с Т т У у Ф ф Х х Ц ц Ч ч Ш ш Щ щ Ъ ъ Ы ы Ь ь Э э Ю ю Я я";
-
-        $e = explode(" ", $escape_chars);
-        $r = explode(" ", $russian_chars);
-        $rus_array = explode("%u", $input);
-    
-        $new_word = str_replace( array( $e, "%20" ), array( $r, " " ), $rus_array );
-
-        return (implode("", $new_word));
+        return $input;
     }
     
     public static function setOption(array $options = [], $key = null, $default_value = null)
@@ -349,6 +314,11 @@ class SBEngine implements SBEngineInterface, SBEngineConstants
         if (is_null($key)) return $default_value;
 
         return array_key_exists($key, $options) ? $options[ $key ] : $default_value;
+    }
+    
+    public static function getContentPath(string $type = "photos", string $creation_date = ''): string
+    {
+        // TODO: Implement getContentPath() method.
     }
 }
 
