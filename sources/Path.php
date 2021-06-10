@@ -8,8 +8,12 @@ class Path
     
     public $isImmutable = false;
     
+    public $isTrailingSlash = true;
+    
+    public $isAbsolutePath = true;
+    
     /**
-     * Factory ?
+     * Mutable create
      *
      * @param $path
      * @return Path
@@ -19,14 +23,28 @@ class Path
         return new self($path, false);
     }
     
+    /**
+     * Immutable create
+     *
+     * @param $path
+     * @return Path
+     */
     public static function createImmutable($path)
     {
         return new self($path, true);
     }
     
-    public function __construct($path, $isImmutable = false)
+    /**
+     * Path constructor
+     *
+     * @param $path
+     * @param bool $isImmutable
+     * @param bool $isTrailingSlash
+     */
+    public function __construct($path, $isImmutable = false, $isTrailingSlash = true)
     {
         $this->isImmutable = $isImmutable;
+        $this->isTrailingSlash = $isTrailingSlash;
         
         if (is_string($path)) {
             $path = trim($path, DIRECTORY_SEPARATOR);
@@ -38,23 +56,57 @@ class Path
         $this->atoms = $this->trimEach($this->atoms);
     }
     
+    /**
+     * @return string
+     */
     public function toString()
     {
-        return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $this->atoms) . DIRECTORY_SEPARATOR;
+        return
+            ($this->isAbsolutePath ? DIRECTORY_SEPARATOR : '')
+            .
+            implode(DIRECTORY_SEPARATOR, $this->atoms)
+            .
+            ($this->isTrailingSlash ? DIRECTORY_SEPARATOR : '');
     }
     
+    /**
+     * @param $data
+     * @return $this|Path
+     */
     public function join($data)
     {
+        $this->isTrailingSlash = true;
+        
         if (is_string($data)) {
             $data = explode(DIRECTORY_SEPARATOR, trim($data, DIRECTORY_SEPARATOR));
         }
         $data = $this->trimEach($data);
         
         if ($this->isImmutable) {
-            return new self(array_merge($this->atoms, $data), $this->isImmutable);
+            return new self(array_merge($this->atoms, $data), $this->isImmutable, $this->isTrailingSlash);
         }
     
         $this->atoms = array_merge($this->atoms, $data);
+        
+        return $this;
+    }
+    
+    /**
+     * @param $data
+     * @return $this|Path
+     */
+    public function joinName($data)
+    {
+        $this->isTrailingSlash = false;
+        
+        $data = $this->trimEach($data);
+        
+        if ($this->isImmutable) {
+            return new self(array_merge($this->atoms, $data), $this->isImmutable, $this->isTrailingSlash);
+        }
+        
+        $this->atoms = array_merge($this->atoms, $data);
+        
         return $this;
     }
     
