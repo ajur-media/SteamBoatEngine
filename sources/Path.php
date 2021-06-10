@@ -2,49 +2,54 @@
 
 namespace SteamBoat;
 
+/**
+ * Class Path
+ *
+ * Data ALWAYS immutable
+ *
+ * @package SteamBoat
+ */
 class Path
 {
     public $atoms = [];
-    
-    public $isImmutable = false;
     
     public $isTrailingSlash = true;
     
     public $isAbsolutePath = true;
     
     /**
-     * Mutable create
+     * Create (immutable)
      *
      * @param $path
      * @return Path
      */
     public static function create($path)
     {
-        return new self($path, false);
+        return new self($path);
     }
     
     /**
-     * Immutable create
+     * Create (alias)
      *
      * @param $path
      * @return Path
      */
     public static function createImmutable($path)
     {
-        return new self($path, true);
+        return new self($path);
     }
     
     /**
      * Path constructor
      *
      * @param $path
-     * @param bool $isImmutable
      * @param bool $isTrailingSlash
+     * @param bool $isAbsolutePath
      */
-    public function __construct($path, $isImmutable = false, $isTrailingSlash = true)
+    public function __construct($path, $isTrailingSlash = true, $isAbsolutePath = true)
     {
-        $this->isImmutable = $isImmutable;
         $this->isTrailingSlash = $isTrailingSlash;
+        $this->isAbsolutePath = $isAbsolutePath;
         
         if (is_string($path)) {
             $path = trim($path, DIRECTORY_SEPARATOR);
@@ -70,6 +75,16 @@ class Path
     }
     
     /**
+     * Magic __toString method
+     *
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->toString();
+    }
+    
+    /**
      * @param $data
      * @return $this|Path
      */
@@ -82,13 +97,7 @@ class Path
         }
         $data = $this->trimEach($data);
         
-        if ($this->isImmutable) {
-            return new self(array_merge($this->atoms, $data), $this->isImmutable, $this->isTrailingSlash);
-        }
-    
-        $this->atoms = array_merge($this->atoms, $data);
-        
-        return $this;
+        return new self(array_merge($this->atoms, $data), $this->isTrailingSlash, $this->isAbsolutePath);
     }
     
     /**
@@ -100,14 +109,29 @@ class Path
         $this->isTrailingSlash = false;
         
         $data = $this->trimEach($data);
-        
-        if ($this->isImmutable) {
-            return new self(array_merge($this->atoms, [ $data ]), $this->isImmutable, $this->isTrailingSlash);
-        }
-        
-        $this->atoms = array_merge($this->atoms, [ $data ] );
-        
-        return $this;
+    
+        return new self(array_merge($this->atoms, [ $data ]), $this->isTrailingSlash, $this->isAbsolutePath);
+    }
+    
+    /**
+     *
+     * @return bool
+     */
+    public function isPresent():bool
+    {
+        return is_dir($this->toString());
+    }
+    
+    /**
+     *
+     * @param int $access_rights
+     * @return bool
+     */
+    public function isAccessible($access_rights = 0777):bool
+    {
+        $path = $this->toString();
+    
+        return is_dir( $path ) || ( mkdir( $path, 0777, true ) && is_dir( $path ) );
     }
     
     /**
