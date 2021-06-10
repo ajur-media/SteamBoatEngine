@@ -102,10 +102,10 @@ class Path
         $data = $this->trimEach($data);
         
         if ($this->isImmutable) {
-            return new self(array_merge($this->atoms, $data), $this->isImmutable, $this->isTrailingSlash);
+            return new self(array_merge($this->atoms, [ $data ]), $this->isImmutable, $this->isTrailingSlash);
         }
         
-        $this->atoms = array_merge($this->atoms, $data);
+        $this->atoms = array_merge($this->atoms, [ $data ] );
         
         return $this;
     }
@@ -113,12 +113,16 @@ class Path
     /**
      * apply trim for each element of array
      *
-     * @param $data
-     * @return array|string[]
+     * @param array|string $data
+     * @return string[]|string
      */
     private function trimEach($data)
     {
-        return array_map(static function ($item) { return trim($item, DIRECTORY_SEPARATOR); }, $data);
+        if (is_array($data)) {
+            return array_map(static function ($item) { return trim($item, DIRECTORY_SEPARATOR); }, $data);
+        }
+    
+        return trim($data);
     }
     
     
